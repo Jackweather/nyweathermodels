@@ -38,8 +38,9 @@ def get_ny_geodata(padding_frac=0.09):
 # Acquire NY geodata once
 ny_gdf, NY_EXTENT, ny_state_outline = get_ny_geodata()
 
-# Set BASE_DIR to a local directory for HRRR output
-BASE_DIR = os.path.join(os.getcwd(), "HRRR_output")
+# Set BASE_DIR to the project root directory for HRRR output
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+BASE_DIR = os.path.join(PROJECT_ROOT, "HRRR_output")
 
 # Update directory structure
 output_dir = os.path.join(BASE_DIR, "tmp_2m")
