@@ -38,21 +38,16 @@ def get_ny_geodata(padding_frac=0.09):
 # Acquire NY geodata once
 ny_gdf, NY_EXTENT, ny_state_outline = get_ny_geodata()
 
-# Set BASE_DIR relative to the script's location
-BASE_DIR = os.path.join(os.path.dirname(__file__), "HRRR")
+BASE_DIR = os.path.join(os.getcwd(), "HRRR_output")
 
 # Update directory structure
 output_dir = os.path.join(BASE_DIR, "tmp_2m")
 grib_dir = os.path.join(output_dir, "grib")
 png_dir = os.path.join(output_dir, "png")
 
-# Ensure the HRRR folder structure is created only if it doesn't already exist
-if not os.path.exists(BASE_DIR):
-    os.makedirs(grib_dir, exist_ok=True)
-    os.makedirs(png_dir, exist_ok=True)
-    print(f"Created directory structure under: {BASE_DIR}")
-else:
-    print(f"Directory structure already exists under: {BASE_DIR}")
+# Create the directories
+os.makedirs(grib_dir, exist_ok=True)
+os.makedirs(png_dir, exist_ok=True)
 
 # HRRR URL and variables
 base_url_hrrr = "https://nomads.ncep.noaa.gov/cgi-bin/filter_hrrr_2d.pl"
