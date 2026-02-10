@@ -67,20 +67,20 @@ variable_tmp = "TMP"  # 2-meter temperature
 available_hours = [0, 3, 6, 9, 12, 15, 18, 21]
 max_forecast_hours = {3, 9, 15, 21}  # These runs only go out to 18 hours
 
+# Function to get the forecast steps based on the run hour
+def get_forecast_steps(run_hour):
+    if run_hour in {3, 9, 15, 21}:  # Limit to 18-hour forecast for 03Z, 09Z, 15Z, 21Z
+        return list(range(1, 19))  # 18-hour forecast
+    return list(range(1, 49, 3))  # Default 48-hour forecast in 3-hour steps
+
 # Calculate the most recent HRRR run dynamically
 current_utc_time = datetime.utcnow()
 most_recent_run_hour = max(h for h in available_hours if h <= current_utc_time.hour)
 most_recent_run_time = current_utc_time.replace(hour=most_recent_run_hour, minute=0, second=0, microsecond=0)
-previous_run_time = most_recent_run_time - timedelta(hours=6)
-
-# Function to get the forecast steps based on the run hour
-def get_forecast_steps(run_hour):
-    if run_hour in max_forecast_hours:
-        return list(range(1, 19))  # 18-hour forecast for 03Z, 09Z, 15Z, 21Z
-    return list(range(1, 49, 3))  # Default 48-hour forecast in 3-hour steps
-
-# Get forecast steps for the current run
 forecast_steps = get_forecast_steps(most_recent_run_hour)
+
+# Define previous_run_time as the most recent run time minus the forecast interval
+previous_run_time = most_recent_run_time - timedelta(hours=6)
 
 # Function to get date and hour strings for a given run time
 def get_run_strings(run_time):
