@@ -12,6 +12,8 @@ app = Flask(__name__)
 BASE_DIR = "/var/data"
 MSLP_PNG_DIR = os.path.join(BASE_DIR, "mslp_prate_csnow_NY", "png")
 TEMP_PNG_DIR = os.path.join(BASE_DIR, "tmp_2m_NY", "png")
+SNOW_8_TO_1_PNG_DIR = os.path.join(BASE_DIR, "snow_8_to_1_NY", "png")
+SNOW_10_TO_1_PNG_DIR = os.path.join(BASE_DIR, "SNOW_10to_1_NY", "png")
 
 @app.route("/")
 def index():
@@ -37,6 +39,28 @@ def get_png(view, filename):
         png_dir = MSLP_PNG_DIR
     return send_from_directory(png_dir, filename)
 
+@app.route("/list_pngs/snow_8_to_1")
+def list_pngs_snow_8_to_1():
+    # List all PNG files in the snow_8_to_1 directory
+    png_files = sorted([f"/get_png/snow_8_to_1/{f}" for f in os.listdir(SNOW_8_TO_1_PNG_DIR) if f.endswith(".png")])
+    return jsonify(png_files)
+
+@app.route("/get_png/snow_8_to_1/<filename>")
+def get_png_snow_8_to_1(filename):
+    # Serve a specific PNG file from the snow_8_to_1 directory
+    return send_from_directory(SNOW_8_TO_1_PNG_DIR, filename)
+
+@app.route("/list_pngs/snow_10_to_1")
+def list_pngs_snow_10_to_1():
+    # List all PNG files in the snow_10_to_1 directory
+    png_files = sorted([f"/get_png/snow_10_to_1/{f}" for f in os.listdir(SNOW_10_TO_1_PNG_DIR) if f.endswith(".png")])
+    return jsonify(png_files)
+
+@app.route("/get_png/snow_10_to_1/<filename>")
+def get_png_snow_10_to_1(filename):
+    # Serve a specific PNG file from the snow_10_to_1 directory
+    return send_from_directory(SNOW_10_TO_1_PNG_DIR, filename)
+
 @app.route("/run-task1")
 def run_task1():
     def run_all_scripts():
@@ -44,6 +68,8 @@ def run_task1():
         scripts = [
             ("/opt/render/project/src/NY/mslp_prate_csnow_NY.py", "/opt/render/project/src/NY"),
             ("/opt/render/project/src/NY/tmp_2m_NY.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/snow_8_to_1_NY.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/SNOW_10to_1_NY.py", "/opt/render/project/src/NY"),
         ]
         for script, cwd in scripts:
             try:
