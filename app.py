@@ -91,5 +91,18 @@ def run_task1():
     threading.Thread(target=run_all_scripts).start()
     return "Task started in background! Check logs folder for output.", 200
 
+@app.route("/list_pngs/precip_type_rate")
+def list_pngs_precip_type_rate():
+    # List all PNG files in the precip_type_rate directory
+    precip_type_rate_png_dir = os.path.join(BASE_DIR, "mslp_prate_csnow_NY", "png")
+    png_files = sorted([f"/get_png/precip_type_rate/{f}" for f in os.listdir(precip_type_rate_png_dir) if f.endswith(".png")])
+    return jsonify(png_files)
+
+@app.route("/get_png/precip_type_rate/<filename>")
+def get_png_precip_type_rate(filename):
+    # Serve a specific PNG file from the precip_type_rate directory
+    precip_type_rate_png_dir = os.path.join(BASE_DIR, "mslp_prate_csnow_NY", "png")
+    return send_from_directory(precip_type_rate_png_dir, filename)
+
 if __name__ == "__main__":
     app.run(debug=True)
