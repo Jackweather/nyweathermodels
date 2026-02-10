@@ -13,3 +13,5 @@ psutil
 pillow
 filelock
 pytz
+geopandas
+
