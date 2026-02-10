@@ -8,8 +8,8 @@ import getpass
 app = Flask(__name__)
 
 # Directories containing the PNG files
-MSLP_PNG_DIR = os.path.join(os.getcwd(), "HRRR_output", "NY", "HRRR", "mslp", "png")
-TEMP_PNG_DIR = os.path.join(os.getcwd(), "HRRR_output", "NY", "HRRR", "tmp_2m", "png")
+MSLP_PNG_DIR = os.path.join(os.getcwd(), "HRRR_output",  "HRRR", "mslp", "png")
+TEMP_PNG_DIR = os.path.join(os.getcwd(), "HRRR_output", "tmp_2m", "png")
 
 @app.route("/")
 def index():
