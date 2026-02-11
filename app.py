@@ -52,8 +52,8 @@ def run_task1():
         scripts = [
             ("/opt/render/project/src/NY/mslp_prate_csnow_NY.py", "/opt/render/project/src/NY"),
             ("/opt/render/project/src/NY/tmp_2m_NY.py", "/opt/render/project/src/NY"),
-            ("/opt/render/project/src/NY/snow_8_to_1_NY.py", "/opt/render/project/src/NY"),
-            ("/opt/render/project/src/NY/SNOW_10to_1_NY.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/Snow_liquid_ratio_8to1.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/Snow_liquid_ratio_10to1.py", "/opt/render/project/src/NY"),
         ]
         for script, cwd in scripts:
             try:
