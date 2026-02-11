@@ -11,6 +11,7 @@ import numpy as np
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import geopandas as gpd
+import gc  # Add garbage collection module
 
 # --- Utility to fetch NY geojson and compute extent/boundary ---
 def get_ny_geodata(padding_frac=0.09):
@@ -235,6 +236,11 @@ def plot_wind_10m(u_path, v_path, step):
     png_path = os.path.join(png_dir, f"hrrr_wind_10m_NY_{step:02d}.png")
     plt.savefig(png_path, bbox_inches="tight", dpi=300)
     plt.close(fig)
+
+    # Explicitly delete large objects and collect garbage
+    del ds_u, ds_v, u, v, Lon2d, Lat2d, u2d, v2d, fig, ax
+    gc.collect()
+
     print(f"Generated PNG: {png_path}")
     return png_path
 
@@ -244,5 +250,11 @@ for step in forecast_steps:
     for grib_files in wind_gribs:
         if grib_files:
             plot_wind_10m(grib_files['UGRD'], grib_files['VGRD'], step)
+
+            # Explicitly delete processed GRIB files and collect garbage
+            for grib_file in grib_files.values():
+                if grib_file:
+                    os.remove(grib_file)
+            gc.collect()
 
 print("HRRR 10m Wind processing complete.")
