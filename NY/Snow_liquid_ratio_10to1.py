@@ -64,9 +64,9 @@ max_forecast_hours = {3, 9, 15, 21}  # These runs only go out to 18 hours
 
 # Function to get the forecast steps based on the run hour
 def get_forecast_steps(run_hour):
-    if run_hour in {3, 9, 15, 21}:  # Limit to 18-hour forecast for 03Z, 09Z, 15Z, 21Z
+    if run_hour in max_forecast_hours:  # Limit to 18-hour forecast for specific hours
         return list(range(1, 19))  # 18-hour forecast
-    return list(range(1, 49, 3))  # Default 48-hour forecast in 3-hour steps
+    return list(range(1, 49, 1))  # Default 48-hour forecast in 1-hour steps
 
 # Calculate the most recent HRRR run dynamically
 current_utc_time = datetime.utcnow()
@@ -97,7 +97,7 @@ snow_colors = [
 snow_cmap = ListedColormap(snow_colors)
 snow_norm = BoundaryNorm(snow_breaks, len(snow_colors))
 
-## Adjust forecast steps to process in chunks of 3
+## Adjust forecast steps to process in chunks of 1
 forecast_steps = get_forecast_steps(most_recent_run_hour)
 
 # Download functions
