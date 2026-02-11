@@ -55,8 +55,7 @@ def run_task1():
             ("/opt/render/project/src/NY/Snow_liquid_ratio_8to1.py", "/opt/render/project/src/NY"),
             ("/opt/render/project/src/NY/Snow_liquid_ratio_10to1.py", "/opt/render/project/src/NY"),
         ]
-
-        def run_script(script, cwd):
+        for script, cwd in scripts:
             try:
                 result = subprocess.run(
                     ["python", script],
@@ -71,18 +70,6 @@ def run_task1():
                 print(f"Error running {os.path.basename(script)}:\n{error_trace}")
                 print("STDOUT:", e.stdout)
                 print("STDERR:", e.stderr)
-
-        # Run scripts in pairs concurrently
-        for i in range(0, len(scripts), 2):
-            threads = []
-            for script, cwd in scripts[i:i+2]:
-                thread = threading.Thread(target=run_script, args=(script, cwd))
-                threads.append(thread)
-                thread.start()
-
-            # Wait for both threads to complete
-            for thread in threads:
-                thread.join()
 
     # Run the task in a separate thread
     threading.Thread(target=run_all_scripts).start()
