@@ -3,296 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HRRR PNG Viewer</title>
+    <title>Weather Viewer</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             height: 100vh;
         }
+
         header {
-            background-color: #87CEEB; /* Light blue */
-            color: white;
-            padding: 10px;
-            text-align: center;
+            background-color: lightblue;
+            color: black;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-        }
-        header h2 {
-            margin: 0;
-            font-size: 1rem;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        #main-container {
-            display: flex;
-            flex: 1;
-        }
-        #sidebar {
-            width: 20%;
-            background-color: #2c3e50; /* Modern dark blue */
-            color: white;
-            padding: 20px;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .dropdown {
-            width: 100%;
-        }
-        .dropdown button {
-            background-color: #3498db; /* Modern blue button */
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s ease;
-            width: 100%;
-            text-align: left;
-        }
-        .dropdown button:hover {
-            background-color: #2980b9; /* Darker blue on hover */
-        }
-        .dropdown-content {
-            display: none;
-            flex-direction: column;
-            margin-top: 10px;
-        }
-        .dropdown-content button {
-            background-color: #34495e;
-            margin-top: 5px;
-        }
-        .dropdown-content button:hover {
-            background-color: #2c3e50;
-        }
-        .dropdown.active .dropdown-content {
-            display: flex;
-        }
-        #content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            position: relative;
+            height: 60px;
         }
-        #image-container {
-            max-width: 90%;
-            max-height: 70vh;
+
+        header .left-header {
+            position: absolute;
+            left: 10px;
+            font-weight: bold;
         }
-        #image-container img {
-            max-width: 100%;
-            max-height: 100%;
+
+        .container {
+            display: flex;
+            flex: 1;
         }
-        #controls {
-            margin: 20px;
+
+        .sidebar {
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 10px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
         }
-        #slider {
-            width: 95%;
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar ul li {
+            margin: 10px 0;
+            cursor: pointer;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align content close to the top without overlapping the header */
+            position: relative;
+            padding-top: 10px; /* Add some spacing below the header */
+        }
+
+        .main-content img {
+            max-width: 68%; /* Reduce the maximum width to 60% */
+            max-height: 68%; /* Reduce the maximum height to 60% */
+        }
+
+        .slider {
+            position: fixed; /* Make the slider always visible */
+            bottom: 10px;
+            left: 10%;
+            width: 80%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.8); /* Add a slight background for visibility */
+            padding: 5px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider input[type="range"] {
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                box-shadow: none;
+                display: flex;
+                justify-content: space-around;
+                padding: 5px 0;
+            }
+
+            .sidebar ul {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .sidebar ul li {
+                margin: 5px;
+                font-size: 14px;
+            }
+
+            .main-content {
+                padding: 5px;
+            }
+
+            .main-content img {
+                max-width: 90%;
+                max-height: 50%;
+            }
+
+            .slider {
+                bottom: 5px;
+                left: 5%;
+                width: 90%;
+                padding: 3px;
+            }
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Truelocalwx</h1>
-        <h2>New York</h2>
+        <div class="left-header">Truelocalwx</div>
+        <h1>New York</h1>
     </header>
-    <div id="main-container">
-        <div id="sidebar">
-            <div class="dropdown" id="view-dropdown">
-                <button id="dropdown-button">Switch View</button>
-                <div class="dropdown-content">
-                    <button id="temp-button">Temperature</button>
-                    <button id="snow-8-to-1-button">Snow 8-to-1</button>
-                    <button id="snow-10-to-1-button">Snow 10-to-1</button>
-                    <button id="precip-type-rate-button">Precip Type Rate</button>
-                </div>
-            </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <ul>
+                <li onclick="loadImages('mslp')">MSLP</li>
+                <li onclick="loadImages('temp')">Temperature</li>
+                <li onclick="loadImages('snow_8_to_1')">Snow (8:1)</li>
+                <li onclick="loadImages('snow_10_to_1')">Snow (10:1)</li>
+                <li onclick="loadImages('precip_type_rate')">Precipitation</li>
+                <li onclick="loadImages('wind')">Wind</li>
+            </ul>
         </div>
-        <div id="content">
-            <div id="image-container">
-                <img id="current-image" src="" alt="HRRR PNG" />
-            </div>
-            <div id="controls">
-                <input type="range" id="slider" min="0" max="0" value="0">
+
+        <div class="main-content">
+            <img id="main-image" src="" alt="Weather Visualization">
+            <div class="slider">
+                <input id="image-slider" type="range" min="0" max="0" value="0" oninput="updateImage()">
             </div>
         </div>
     </div>
+
     <script>
-        let pngFiles = [];
+        let images = [];
         let currentIndex = 0;
-        let isTemperatureView = false;
-        let preloadedImages = [];
 
-        // Save the current view to localStorage
-        function saveCurrentView(view) {
-            localStorage.setItem("currentView", view);
+        function loadImages(view) {
+            fetch(`/list_pngs/${view}`)
+                .then(response => response.json())
+                .then(data => {
+                    images = data;
+                    if (images.length > 0) {
+                        currentIndex = 0;
+                        document.getElementById('image-slider').max = images.length - 1;
+                        document.getElementById('image-slider').value = 0;
+                        updateImage();
+                    }
+                })
+                .catch(error => console.error('Error loading images:', error));
         }
 
-        // Restore the current view from localStorage
-        function restoreCurrentView() {
-            const savedView = localStorage.getItem("currentView");
-            return savedView ? savedView : "mslp"; // Default to "mslp" if no view is saved
-        }
-
-        // Update the fetchPngFiles function to use the restored view
-        async function fetchPngFiles(view = restoreCurrentView()) {
-            saveCurrentView(view); // Save the selected view
-            pngFiles = []; // Clear the previous PNG files
-            currentIndex = 0; // Reset the current index
-            const response = await fetch(`/list_pngs/${view}`);
-            if (response.ok) {
-                pngFiles = await response.json();
-                preloadImages(); // Preload images after fetching the list
-                if (pngFiles.length > 0) {
-                    document.getElementById("slider").max = pngFiles.length - 1;
-                    restoreSliderPosition(); // Restore slider position on page load
-                    updateImage();
-                } else {
-                    document.getElementById("current-image").src = "";
-                    document.getElementById("slider").max = 0;
-                }
-            } else {
-                console.error("Failed to fetch PNG files.");
-            }
-        }
-
-        // Preload images to reduce lag
-        function preloadImages() {
-            preloadedImages = pngFiles.map((url) => {
-                const img = new Image();
-                img.src = `${url}?t=${new Date().getTime()}`; // Add cache-busting query parameter
-                return img;
-            });
-        }
-
-        // Update the displayed image
         function updateImage() {
-            const imgElement = document.getElementById("current-image");
-            if (pngFiles.length > 0) {
-                imgElement.src = `${pngFiles[currentIndex]}?t=${new Date().getTime()}`; // Add cache-busting query parameter
-                document.getElementById("slider").value = currentIndex;
-                localStorage.setItem("sliderPosition", currentIndex); // Save slider position
-            } else {
-                imgElement.src = "";
+            const slider = document.getElementById('image-slider');
+            currentIndex = parseInt(slider.value, 10);
+            document.getElementById('main-image').src = images[currentIndex];
+        }
+
+        document.addEventListener('keydown', (event) => {
+            const slider = document.getElementById('image-slider');
+            if (event.key === 'ArrowLeft' && currentIndex > 0) {
+                currentIndex--;
+            } else if (event.key === 'ArrowRight' && currentIndex < images.length - 1) {
+                currentIndex++;
             }
-        }
-
-        // Restore slider position from localStorage
-        function restoreSliderPosition() {
-            const savedPosition = localStorage.getItem("sliderPosition");
-            if (savedPosition !== null && pngFiles.length > 0) {
-                currentIndex = Math.min(parseInt(savedPosition, 10), pngFiles.length - 1);
-                document.getElementById("slider").value = currentIndex;
-                updateImage();
-            }
-        }
-
-        // Save slider position to localStorage on change
-        document.getElementById("slider").addEventListener("change", (event) => {
-            localStorage.setItem("sliderPosition", event.target.value);
-        });
-
-        // Automatically fetch new PNGs at regular intervals
-        function startAutoFetch(interval = 5000) { // Updated interval: 5 seconds
-            setInterval(() => {
-                console.log("Fetching new PNGs...");
-                fetchPngFiles();
-            }, interval);
-        }
-
-        // Handle the slider change
-        document.getElementById("slider").addEventListener("input", (event) => {
-            currentIndex = parseInt(event.target.value, 10);
+            slider.value = currentIndex;
             updateImage();
         });
 
-        // Handle taps or clicks anywhere on the screen to update the slider
-        document.body.addEventListener("click", (event) => {
-            const slider = document.getElementById("slider");
-            const rect = slider.getBoundingClientRect();
-            const clickX = event.clientX;
-
-            // Check if the click is within the slider's horizontal bounds
-            if (clickX >= rect.left && clickX <= rect.right) {
-                const sliderWidth = rect.width;
-                const relativeClickX = clickX - rect.left;
-                const newSliderValue = Math.round((relativeClickX / sliderWidth) * slider.max);
-                slider.value = newSliderValue;
-                currentIndex = newSliderValue;
-                updateImage();
+        document.addEventListener('click', (event) => {
+            const slider = document.getElementById('image-slider');
+            if (event.clientX < window.innerWidth / 2 && currentIndex > 0) {
+                currentIndex--;
+            } else if (event.clientX >= window.innerWidth / 2 && currentIndex < images.length - 1) {
+                currentIndex++;
             }
+            slider.value = currentIndex;
+            updateImage();
         });
 
-        // Handle the Temperature button click
-        document.getElementById("temp-button").addEventListener("click", () => {
-            isTemperatureView = true;
-            const view = "temp";
-            saveCurrentView(view); // Save the selected view
-            fetchPngFiles(view); // Reload the PNG list when switching views
-        });
-
-        // Handle the Snow 8-to-1 button click
-        document.getElementById("snow-8-to-1-button").addEventListener("click", () => {
-            isTemperatureView = false;
-            const view = "snow_8_to_1";
-            saveCurrentView(view); // Save the selected view
-            fetchPngFiles(view); // Reload the PNG list when switching views
-        });
-
-        // Handle the Snow 10-to-1 button click
-        document.getElementById("snow-10-to-1-button").addEventListener("click", () => {
-            isTemperatureView = false;
-            const view = "snow_10_to_1";
-            saveCurrentView(view); // Save the selected view
-            fetchPngFiles(view); // Reload the PNG list when switching views
-        });
-
-        // Handle the Precip Type Rate button click
-        document.getElementById("precip-type-rate-button").addEventListener("click", () => {
-            const view = "precip_type_rate";
-            saveCurrentView(view);
-            fetchPngFiles(view);
-        });
-
-        // Handle left and right arrow key presses for slider navigation
-        document.body.addEventListener("keydown", (event) => {
-            const slider = document.getElementById("slider");
-            if (event.key === "ArrowLeft") {
-                if (currentIndex > 0) {
-                    currentIndex = Math.max(0, currentIndex - 1); // Ensure it decreases by 1
-                    slider.value = currentIndex;
-                    updateImage();
-                }
-            } else if (event.key === "ArrowRight") {
-                if (currentIndex < slider.max) {
-                    currentIndex = Math.min(slider.max, currentIndex + 1); // Ensure it increases by 1
-                    slider.value = currentIndex;
-                    updateImage();
-                }
-            }
-        });
-
-        // Toggle dropdown visibility
-        document.getElementById("dropdown-button").addEventListener("click", () => {
-            const dropdown = document.getElementById("view-dropdown");
-            dropdown.classList.toggle("active");
-        });
-
-        // Initialize the app with the restored view
-        fetchPngFiles();
-        startAutoFetch(); // Start auto-fetching PNGs
+        setInterval(() => {
+            fetch(`/list_pngs/${currentView}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > images.length) {
+                        images = data;
+                        document.getElementById('image-slider').max = images.length - 1;
+                    }
+                })
+                .catch(error => console.error('Error fetching new images:', error));
+        }, 5000);
     </script>
 </body>
 </html>
