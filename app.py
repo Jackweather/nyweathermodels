@@ -56,27 +56,33 @@ def run_task1():
             ("/opt/render/project/src/NY/Snow_liquid_ratio_10to1.py", "/opt/render/project/src/NY"),
         ]
 
-        def run_script_pair(pair):
-            for script, cwd in pair:
-                try:
-                    result = subprocess.run(
-                        ["python", script],
-                        check=True, cwd=cwd,
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-                    )
-                    print(f"{os.path.basename(script)} ran successfully!")
-                    print("STDOUT:", result.stdout)
-                    print("STDERR:", result.stderr)
-                except subprocess.CalledProcessError as e:
-                    error_trace = traceback.format_exc()
-                    print(f"Error running {os.path.basename(script)}:\n{error_trace}")
-                    print("STDOUT:", e.stdout)
-                    print("STDERR:", e.stderr)
+        def run_script(script, cwd):
+            try:
+                result = subprocess.run(
+                    ["python", script],
+                    check=True, cwd=cwd,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+                )
+                print(f"{os.path.basename(script)} ran successfully!")
+                print("STDOUT:", result.stdout)
+                print("STDERR:", result.stderr)
+            except subprocess.CalledProcessError as e:
+                error_trace = traceback.format_exc()
+                print(f"Error running {os.path.basename(script)}:\n{error_trace}")
+                print("STDOUT:", e.stdout)
+                print("STDERR:", e.stderr)
 
-        # Run scripts in pairs
+        # Run scripts in pairs concurrently
         for i in range(0, len(scripts), 2):
-            pair = scripts[i:i+2]
-            run_script_pair(pair)
+            threads = []
+            for script, cwd in scripts[i:i+2]:
+                thread = threading.Thread(target=run_script, args=(script, cwd))
+                threads.append(thread)
+                thread.start()
+
+            # Wait for both threads to complete
+            for thread in threads:
+                thread.join()
 
     # Run the task in a separate thread
     threading.Thread(target=run_all_scripts).start()
