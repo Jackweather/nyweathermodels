@@ -271,13 +271,13 @@
             const slider = document.getElementById("slider");
             if (event.key === "ArrowLeft") {
                 if (currentIndex > 0) {
-                    currentIndex--; // Decrease index by 1
+                    currentIndex = Math.max(0, currentIndex - 1); // Ensure it decreases by 1
                     slider.value = currentIndex;
                     updateImage();
                 }
             } else if (event.key === "ArrowRight") {
                 if (currentIndex < slider.max) {
-                    currentIndex++; // Increase index by 1
+                    currentIndex = Math.min(slider.max, currentIndex + 1); // Ensure it increases by 1
                     slider.value = currentIndex;
                     updateImage();
                 }
