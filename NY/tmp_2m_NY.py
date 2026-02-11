@@ -11,6 +11,7 @@ import numpy as np
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import geopandas as gpd
+import gc  # Add garbage collection module
 
 # --- Utility to fetch NY geojson and compute extent/boundary ---
 def get_ny_geodata(padding_frac=0.09):
@@ -258,6 +259,11 @@ def plot_tmp_2m(tmp_path, step):
     png_path = os.path.join(png_dir, f"hrrr_tmp_2m_NY_{step:02d}.png")
     plt.savefig(png_path, bbox_inches="tight", dpi=300)
     plt.close(fig)
+
+    # Explicitly delete large objects and collect garbage
+    del ds_tmp, tmp, Lon2d, Lat2d, tmp2d, mesh, fig, ax
+    gc.collect()
+
     print(f"Generated PNG: {png_path}")
     return png_path
 
@@ -280,5 +286,9 @@ for step in forecast_steps:
     for i, tmp_grib in enumerate(tmp_gribs):
         if tmp_grib:
             plot_tmp_2m(tmp_grib, step + i)
+
+            # Explicitly delete processed GRIB file and collect garbage
+            del tmp_grib
+            gc.collect()
 
 print("HRRR 2m Temperature processing complete.")
