@@ -48,7 +48,7 @@
             align-items: flex-start;
         }
         .dropdown {
-            width: 100%;
+            position: relative;
         }
         .dropdown button {
             background-color: #3498db; /* Modern blue button */
@@ -66,16 +66,28 @@
             background-color: #2980b9; /* Darker blue on hover */
         }
         .dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #2c3e50;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            width: 100%;
             display: none;
             flex-direction: column;
             margin-top: 10px;
         }
         .dropdown-content button {
-            background-color: #34495e;
-            margin-top: 5px;
+            width: 100%;
+            text-align: left;
+            padding: 10px;
+            border: none;
+            background: none;
+            color: white;
+            cursor: pointer;
         }
         .dropdown-content button:hover {
-            background-color: #2c3e50;
+            background-color: #34495e;
         }
         .dropdown.active .dropdown-content {
             display: flex;
@@ -111,13 +123,13 @@
     <div id="main-container">
         <div id="sidebar">
             <div class="dropdown" id="view-dropdown">
-                <button id="dropdown-button">Switch View</button>
+                <button id="dropdown-button">Variables</button>
                 <div class="dropdown-content">
-                    <button id="temp-button">Temperature</button>
+                    <button id="temp-button">2m-Temp</button>
                     <button id="snow-8-to-1-button">Snow 8-to-1</button>
                     <button id="snow-10-to-1-button">Snow 10-to-1</button>
                     <button id="precip-type-rate-button">Precip Type Rate</button>
-                    <button id="wind-button">Wind</button>
+                    <button id="wind-button">10m-Wind</button>
                     <button id="total-precip-button">Total Precip</button>
                 </div>
             </div>
