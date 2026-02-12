@@ -237,6 +237,21 @@ def plot_weasd_surface(weasd_path, step):
         zorder=1
     )
 
+    # Add snow depth values every 0.5 degrees latitude and longitude within the mask
+    for lat in np.arange(np.floor(Lat2d.min()), np.ceil(Lat2d.max()), 0.5):
+        for lon in np.arange(np.floor(Lon2d.min()), np.ceil(Lon2d.max()), 0.5):
+            # Find the closest grid point to the current lat/lon
+            lat_idx = (np.abs(Lat2d[:, 0] - lat)).argmin()
+            lon_idx = (np.abs(Lon2d[0, :] - lon)).argmin()
+
+            # Only plot if the point is within the NY mask and matches the 0.5-degree grid
+            if ny_mask[lat_idx, lon_idx] and not np.isnan(weasd2d[lat_idx, lon_idx]):
+                ax.text(
+                    Lon2d[lat_idx, lon_idx], Lat2d[lat_idx, lon_idx], f"{weasd2d[lat_idx, lon_idx]:.1f}",
+                    fontsize=5, color="black", ha="center", va="center",
+                    transform=ccrs.PlateCarree(), zorder=10
+                )
+
     # Colorbar
     cbar_ax = fig.add_axes([0.05, 0.08, 0.9, 0.02])  # Adjusted to match plot width
     cbar = plt.colorbar(mesh, cax=cbar_ax, orientation='horizontal')
