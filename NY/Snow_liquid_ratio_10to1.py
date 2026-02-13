@@ -259,12 +259,36 @@ def plot_weasd_surface(weasd_path, step):
     cbar.set_ticks(snow_breaks)  # Ensure every tick is shown
     cbar.ax.tick_params(labelsize=6)
 
+
     # Overlay NY counties and state outline
     try:
         ny_gdf.plot(ax=ax, facecolor="none", edgecolor="black", linewidth=0.5, zorder=7)
         gpd.GeoSeries([ny_state_outline], crs="EPSG:4326").boundary.plot(ax=ax, edgecolor="#000000", linewidth=1.0, zorder=8)
     except Exception as e:
         print(f"Error plotting NY overlays: {e}")
+
+    # Add attribution text at the very bottom right of the map extent, stacked tightly
+    margin_x = (NY_EXTENT[1] - NY_EXTENT[0]) * 0.01
+    margin_y = (NY_EXTENT[3] - NY_EXTENT[2]) * 0.01
+    text_x = NY_EXTENT[1] - margin_x
+    text_y_base = NY_EXTENT[2] + margin_y
+    line_spacing = (NY_EXTENT[3] - NY_EXTENT[2]) * 0.025  # small vertical gap
+    ax.text(
+        text_x, text_y_base + line_spacing, "Images by Jack Fordyce",
+        fontsize=7, color="black", ha="right", va="bottom",
+        fontweight="normal", alpha=0.85,
+        transform=ccrs.PlateCarree(),
+        zorder=20,
+        path_effects=[plt.matplotlib.patheffects.Stroke(linewidth=1, foreground='white'), plt.matplotlib.patheffects.Normal()]
+    )
+    ax.text(
+        text_x, text_y_base, "Truelocalwx.com",
+        fontsize=7, color="black", ha="right", va="bottom",
+        fontweight="normal", alpha=0.85,
+        transform=ccrs.PlateCarree(),
+        zorder=20,
+        path_effects=[plt.matplotlib.patheffects.Stroke(linewidth=1, foreground='white'), plt.matplotlib.patheffects.Normal()]
+    )
 
     # Save PNG
     png_path = os.path.join(png_dir, f"hrrr_10_to_1_SNOW_NY_{step:02d}.png")
