@@ -433,12 +433,36 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
             ax.text(high_lon, high_lat, "H", color='blue', fontsize=12, fontweight='bold', ha='center', va='center', transform=ccrs.PlateCarree(), zorder=6, path_effects=[patheffects.Stroke(linewidth=1, foreground='white'), patheffects.Normal()])
             ax.text(high_lon, high_lat - 0.2, f"{high_value:.0f}", color='blue', fontsize=6, fontweight='bold', ha='center', va='top', transform=ccrs.PlateCarree(), zorder=6)
 
+
         # Overlay NY counties and state outline to ensure PNGs clearly show NY only
         try:
             ny_gdf.plot(ax=ax, facecolor="none", edgecolor="black", linewidth=0.5, zorder=7)
             gpd.GeoSeries([ny_state_outline], crs="EPSG:4326").boundary.plot(ax=ax, edgecolor="#000000", linewidth=1.0, zorder=8)
         except Exception as e:
             print(f"Error plotting NY overlays: {e}")
+
+        # Move attribution text further to the right and up from the bottom left
+        margin_x = (NY_EXTENT[1] - NY_EXTENT[0]) * 0.06  # even more right
+        margin_y = (NY_EXTENT[3] - NY_EXTENT[2]) * 0.075  # even more up
+        text_x = NY_EXTENT[0] + margin_x
+        text_y_base = NY_EXTENT[2] + margin_y
+        line_spacing = (NY_EXTENT[3] - NY_EXTENT[2]) * 0.03  # vertical gap
+        ax.text(
+            text_x, text_y_base + line_spacing, "Images by Jack Fordyce",
+            fontsize=7, color="black", ha="left", va="bottom",
+            fontweight="normal", alpha=0.85,
+            transform=ccrs.PlateCarree(),
+            zorder=20,
+            path_effects=[patheffects.Stroke(linewidth=1, foreground='white'), patheffects.Normal()]
+        )
+        ax.text(
+            text_x, text_y_base, "Truelocalwx.com",
+            fontsize=7, color="black", ha="left", va="bottom",
+            fontweight="normal", alpha=0.85,
+            transform=ccrs.PlateCarree(),
+            zorder=20,
+            path_effects=[patheffects.Stroke(linewidth=1, foreground='white'), patheffects.Normal()]
+        )
 
         # Save only NY PNGs
         png_path = os.path.join(png_dir, f"hrrr_combined_NY_{step:02d}.png")
