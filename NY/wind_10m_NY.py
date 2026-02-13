@@ -232,6 +232,29 @@ def plot_wind_10m(u_path, v_path, step):
     except Exception as e:
         print(f"Error plotting NY overlays: {e}")
 
+    # Add attribution text at the very bottom right of the map area, stacked tightly
+    margin_x = (NY_EXTENT[1] - NY_EXTENT[0]) * 0.01
+    margin_y = (NY_EXTENT[3] - NY_EXTENT[2]) * 0.01
+    text_x = NY_EXTENT[1] - margin_x
+    text_y_base = NY_EXTENT[2] + margin_y
+    line_spacing = (NY_EXTENT[3] - NY_EXTENT[2]) * 0.025  # small vertical gap
+    ax.text(
+        text_x, text_y_base + line_spacing, "Images by Jack Fordyce",
+        fontsize=7, color="black", ha="right", va="bottom",
+        fontweight="normal", alpha=0.85,
+        transform=ccrs.PlateCarree(),
+        zorder=20,
+        path_effects=[plt.matplotlib.patheffects.Stroke(linewidth=1, foreground='white'), plt.matplotlib.patheffects.Normal()]
+    )
+    ax.text(
+        text_x, text_y_base, "Truelocalwx.com",
+        fontsize=7, color="black", ha="right", va="bottom",
+        fontweight="normal", alpha=0.85,
+        transform=ccrs.PlateCarree(),
+        zorder=20,
+        path_effects=[plt.matplotlib.patheffects.Stroke(linewidth=1, foreground='white'), plt.matplotlib.patheffects.Normal()]
+    )
+
     # Save PNG
     png_path = os.path.join(png_dir, f"hrrr_wind_10m_NY_{step:02d}.png")
     plt.savefig(png_path, bbox_inches="tight", dpi=300)
