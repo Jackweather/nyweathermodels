@@ -61,7 +61,7 @@ def run_task1():
         ]
 
         # Semaphore to limit the number of concurrent processes
-        semaphore = threading.Semaphore(2)  # Limit to 3 concurrent scripts
+        semaphore = threading.Semaphore(3)  # Limit to 3 concurrent scripts
 
         def run_script(script, cwd):
             with semaphore:
@@ -102,4 +102,5 @@ def run_task1():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
