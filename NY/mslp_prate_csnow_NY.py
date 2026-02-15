@@ -165,18 +165,26 @@ def get_hrrr_grib(step, variable):
 # --- Plotting function (uses adjusted NY extent) ---
 def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None, cicep_path=None):
     try:
-        # Open datasets
-        ds_mslp = xr.open_dataset(mslp_path, engine="cfgrib")
-        ds_prate = xr.open_dataset(prate_path, engine="cfgrib")
-        ds_csnow = xr.open_dataset(csnow_path, engine="cfgrib") if csnow_path else None
-        ds_cfrzr = xr.open_dataset(cfrzr_path, engine="cfgrib") if cfrzr_path else None
-        ds_cicep = xr.open_dataset(cicep_path, engine="cfgrib") if cicep_path else None
+        # Open datasets with dask chunking for lazy loading
+        ds_mslp = xr.open_dataset(mslp_path, engine="cfgrib", chunks={})
+        ds_prate = xr.open_dataset(prate_path, engine="cfgrib", chunks={})
+        ds_csnow = xr.open_dataset(csnow_path, engine="cfgrib", chunks={}) if csnow_path else None
+        ds_cfrzr = xr.open_dataset(cfrzr_path, engine="cfgrib", chunks={}) if cfrzr_path else None
+        ds_cicep = xr.open_dataset(cicep_path, engine="cfgrib", chunks={}) if cicep_path else None
 
         # extract arrays
         mslp = ds_mslp.get('mslma')
         prate = ds_prate.get('prate')
         if mslp is None or prate is None:
             print("Required variables not in datasets")
+            ds_mslp.close()
+            ds_prate.close()
+            if ds_csnow is not None:
+                ds_csnow.close()
+            if ds_cfrzr is not None:
+                ds_cfrzr.close()
+            if ds_cicep is not None:
+                ds_cicep.close()
             return None
         mslp = mslp.values / 100.0  # Pa to hPa
         prate = prate.values * 3600  # mm/s to mm/hr
@@ -209,6 +217,7 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
                     snow_rate2d = np.where(snow_mask, prate2d, np.nan)
             except Exception:
                 snow_rate2d = None
+            ds_csnow.close()
 
         # compute cfrzr_rate2d if cfrzr dataset present
         if ds_cfrzr is not None and "cfrzr" in ds_cfrzr:
@@ -220,6 +229,7 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
                     cfrzr_rate2d = np.where(cfrzr_mask, prate2d, np.nan)
             except Exception:
                 cfrzr_rate2d = None
+            ds_cfrzr.close()
 
         # compute cicep_rate2d if cicep dataset present
         if ds_cicep is not None and "cicep" in ds_cicep:
@@ -231,6 +241,7 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
                     cicep_rate2d = np.where(cicep_mask, prate2d, np.nan)
             except Exception:
                 cicep_rate2d = None
+            ds_cicep.close()
 
         # --- Mask all fields to New York polygon so only NY appears ---
         from matplotlib.path import Path
@@ -468,7 +479,10 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
         png_path = os.path.join(png_dir, f"hrrr_combined_NY_{step:02d}.png")
         plt.savefig(png_path, bbox_inches="tight", dpi=300)
         plt.close(fig)
+        ds_mslp.close()
+        ds_prate.close()
         print(f"Generated PNG: {png_path}")
+        gc.collect()
         return png_path
 
     except Exception as e:
