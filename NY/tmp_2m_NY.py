@@ -165,7 +165,8 @@ def get_hrrr_grib(steps, variable):
 # --- Plotting function ---
 def plot_tmp_2m(tmp_path, step):
     try:
-        ds_tmp = xr.open_dataset(tmp_path, engine="cfgrib")
+        # Use dask chunking for lazy loading
+        ds_tmp = xr.open_dataset(tmp_path, engine="cfgrib", chunks={})
     except Exception as e:
         print(f"Error opening dataset: {e}")
         return None
@@ -174,8 +175,10 @@ def plot_tmp_2m(tmp_path, step):
     tmp = ds_tmp.get('t2m')
     if tmp is None:
         print("Required variable not in dataset")
+        ds_tmp.close()
         return None
     tmp = (tmp.values - 273.15) * 9/5 + 32  # Convert from Kelvin to Fahrenheit
+    ds_tmp.close()
 
     lats = ds_tmp['latitude'].values
     lons = ds_tmp['longitude'].values
@@ -306,7 +309,7 @@ def plot_tmp_2m(tmp_path, step):
     plt.close(fig)
 
     # Explicitly delete large objects and collect garbage
-    del ds_tmp, tmp, Lon2d, Lat2d, tmp2d, mesh, fig, ax
+    del tmp, Lon2d, Lat2d, tmp2d, mesh, fig, ax
     gc.collect()
 
     print(f"Generated PNG: {png_path}")
