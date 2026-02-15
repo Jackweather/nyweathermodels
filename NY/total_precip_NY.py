@@ -160,7 +160,8 @@ def get_hrrr_grib(steps, variable):
 # --- Plotting function ---
 def plot_precip(precip_path, step):
     try:
-        ds_precip = xr.open_dataset(precip_path, engine="cfgrib")
+        # Use dask chunking for lazy loading
+        ds_precip = xr.open_dataset(precip_path, engine="cfgrib", chunks={})
     except Exception as e:
         print(f"Error opening dataset: {e}")
         return None
@@ -169,8 +170,10 @@ def plot_precip(precip_path, step):
     precip = ds_precip.get('tp')
     if precip is None:
         print("Required variable not in dataset")
+        ds_precip.close()
         return None
     precip = precip.values  # Precipitation is already in mm
+    ds_precip.close()
 
     # Add conversion from mm to inches for precipitation
     # Conversion factor: 1 inch = 25.4 mm
@@ -305,7 +308,7 @@ def plot_precip(precip_path, step):
     plt.close(fig)
 
     # Explicitly delete large objects and collect garbage
-    del ds_precip, precip, Lon2d, Lat2d, precip2d, mesh, fig, ax
+    del precip, Lon2d, Lat2d, precip2d, mesh, fig, ax
     gc.collect()
 
     print(f"Generated PNG: {png_path}")
