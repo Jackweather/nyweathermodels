@@ -14,3 +14,4 @@ pillow
 filelock
 pytz
 geopandas
+dask
