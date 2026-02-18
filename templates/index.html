@@ -25,26 +25,16 @@
         header h1 {
             margin: 0;
             font-size: 1.5rem;
-        }
-        
-        /* Main container layout */
-        #main-container {
-            display: flex;
+            text-align: center;
             flex: 1;
         }
 
-        /* Sidebar styles */
-        #sidebar {
-            width: 250px;
-            background-color: #2c3e50; /* Modern dark blue */
-            color: white;
-            padding: 20px;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+        /* Dropdown menu styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
         }
-        .nav-btn {
+        .dropdown-button {
             background: #41507a;
             color: #fff;
             border: none;
@@ -52,13 +42,35 @@
             padding: 10px 22px;
             font-size: 1em;
             cursor: pointer;
-            margin: 8px 0;
             transition: background 0.18s;
-            width: 100%;
-            text-align: left;
         }
-        .nav-btn:hover {
+        .dropdown-button:hover {
             background: #263159;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #2c3e50;
+            color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            border-radius: 8px;
+        }
+        .dropdown-content button {
+            background: none;
+            color: white;
+            border: none;
+            padding: 10px;
+            text-align: left;
+            width: 100%;
+            cursor: pointer;
+        }
+        .dropdown-content button:hover {
+            background-color: #41507a;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
         }
 
         /* Content area */
@@ -83,33 +95,6 @@
         }
         #slider {
             width: 95%;
-        }
-
-        /* Mobile styles */
-        @media (max-width: 600px) {
-            header h1 {
-                font-size: 1.2rem;
-            }
-            #main-container {
-                flex-direction: column;
-            }
-            #sidebar {
-                width: 100%;
-                padding: 10px;
-                box-shadow: none;
-                align-items: center;
-            }
-            .nav-btn {
-                width: auto;
-                margin: 5px;
-                text-align: center;
-            }
-            #image-container {
-                max-height: 50vh;
-            }
-            #slider {
-                width: 90%;
-            }
         }
 
         /* Loading overlay */
@@ -141,29 +126,31 @@
 </head>
 <body>
     <header>
-        <h1>New-York State Weather Models</h1>
-    </header>
-    <div id="main-container">
-        <div id="sidebar">
-            <button class="nav-btn" id="temp-button">2m-Temp</button>
-            <button class="nav-btn" id="snow-8-to-1-button">Snow 8-to-1</button>
-            <button class="nav-btn" id="snow-10-to-1-button">Snow 10-to-1</button>
-            <button class="nav-btn" id="precip-type-rate-button">Precip Type Rate</button>
-            <button class="nav-btn" id="wind-button">10m-Wind</button>
-            <button class="nav-btn" id="total-precip-button">Total Precip</button>
+        <div class="dropdown">
+            <button class="dropdown-button">Variables</button>
+            <div class="dropdown-content">
+                <button id="temp-button">2m-Temp</button>
+                <button id="snow-8-to-1-button">Snow 8-to-1</button>
+                <button id="snow-10-to-1-button">Snow 10-to-1</button>
+                <button id="precip-type-rate-button">Precip Type Rate</button>
+                <button id="wind-button">10m-Wind</button>
+                <button id="total-precip-button">Total Precip</button>
+            </div>
         </div>
-        <div id="content">
-            <div id="image-container">
-                <img id="current-image" src="" alt="HRRR PNG" />
-            </div>
-            <div id="controls">
-                <input type="range" id="slider" min="0" max="0" value="0" step="1">
-            </div>
-            <div id="loading-overlay">
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <div class="spinner"></div>
-                    <div style="margin-top:16px; font-size:1.2rem; color:#3498db;">Loading images...</div>
-                </div>
+        <h1>New York State Weather Models</h1>
+        <div style="width: 100px;"></div> <!-- Placeholder for alignment -->
+    </header>
+    <div id="content">
+        <div id="image-container">
+            <img id="current-image" src="" alt="HRRR PNG" />
+        </div>
+        <div id="controls">
+            <input type="range" id="slider" min="0" max="0" value="0" step="1">
+        </div>
+        <div id="loading-overlay">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <div class="spinner"></div>
+                <div style="margin-top:16px; font-size:1.2rem; color:#3498db;">Loading images...</div>
             </div>
         </div>
     </div>
