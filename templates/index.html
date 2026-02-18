@@ -238,5 +238,64 @@
             }
         });
     </script>
+    <script>
+        // Function to detect if the user is on an iPhone
+        function isIphone() {
+            return /iPhone/.test(navigator.userAgent) && !window.MSStream;
+        }
+
+        // Function to show the popup
+        function showIphonePopup() {
+            const popup = document.createElement('div');
+            popup.id = 'iphone-popup';
+            popup.style.position = 'fixed';
+            popup.style.top = '0';
+            popup.style.left = '0';
+            popup.style.width = '100%';
+            popup.style.height = '100%';
+            popup.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            popup.style.color = 'white';
+            popup.style.display = 'flex';
+            popup.style.flexDirection = 'column';
+            popup.style.alignItems = 'center';
+            popup.style.justifyContent = 'center';
+            popup.style.zIndex = '300';
+
+            const message = document.createElement('p');
+            message.textContent = 'If you are on an iPhone, click this to optimize the layout.';
+            message.style.fontSize = '1.5rem';
+            message.style.textAlign = 'center';
+            message.style.marginBottom = '20px';
+
+            const button = document.createElement('button');
+            button.textContent = 'Optimize Layout';
+            button.style.padding = '10px 20px';
+            button.style.fontSize = '1rem';
+            button.style.border = 'none';
+            button.style.borderRadius = '5px';
+            button.style.backgroundColor = '#3498db';
+            button.style.color = 'white';
+            button.style.cursor = 'pointer';
+
+            button.addEventListener('click', function () {
+                popup.style.display = 'none';
+                document.body.style.flexDirection = 'column';
+                document.body.style.alignItems = 'center';
+                document.body.style.justifyContent = 'flex-start';
+                document.getElementById('main-container').style.marginTop = '0';
+            });
+
+            popup.appendChild(message);
+            popup.appendChild(button);
+            document.body.appendChild(popup);
+        }
+
+        // Show the popup if the user is on an iPhone
+        document.addEventListener('DOMContentLoaded', function () {
+            if (isIphone()) {
+                showIphonePopup();
+            }
+        });
+    </script>
 </body>
 </html>
