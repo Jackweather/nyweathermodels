@@ -5,27 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HRRR PNG Viewer</title>
     <style>
-        html, body {
-            height: 100%; /* Ensure the body covers the full height */
-            width: 100%; /* Ensure the body covers the full width */
+        body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            overflow-x: hidden; /* Prevent horizontal scrolling */
+            display: flex;
+            justify-content: center;
+            background-color: white; /* White space on both sides */
         }
         #main-container {
-            height: 100%; /* Make the main container fill the screen */
-            display: flex;
-            flex-direction: column;
             width: 80%; /* Main content occupies 80% of the screen */
             max-width: 1200px; /* Optional: Limit the maximum width */
             background-color: #f9f9f9; /* Light background for the main content */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for separation */
-        }
-        @media (max-width: 768px) {
-            #main-container {
-                width: 100%; /* Ensure the container takes full width on smaller screens */
-                max-width: none; /* Remove max-width restriction */
-            }
         }
         header {
             background-color: #87CEEB; /* Light blue */
@@ -153,13 +145,23 @@
                 flex-direction: column; /* Stack elements vertically */
                 align-items: center;
             }
+            .dropdown {
+                margin-top: 10px; /* Place the dropdown below the header */
+            }
             #content {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                justify-content: space-between; /* Ensure proper spacing */
             }
-            .dropdown {
-                margin-top: 20px; /* Add spacing below the image */
+            #image-container {
+                flex: 1; /* Allow the image container to take up the remaining space */
+                max-width: 100%; /* Ensure the image container scales properly */
+                max-height: 80vh; /* Adjust height for better visibility */
+            }
+            #slider {
+                width: 90%; /* Adjust slider width */
+                margin-bottom: 10px; /* Add spacing below the slider */
             }
         }
     </style>
