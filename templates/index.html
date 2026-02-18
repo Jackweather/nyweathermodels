@@ -65,6 +65,7 @@
             margin-bottom: 12px;
             box-shadow: 0 2px 8px rgba(52,152,219,0.08);
             transition: background 0.2s, box-shadow 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
         .dropdown #dropdown-button:active, .dropdown #dropdown-button:focus {
             background: linear-gradient(90deg, #2980b9 60%, #3498db 100%);
@@ -95,6 +96,7 @@
             cursor: pointer;
             box-shadow: 0 1px 4px rgba(52,152,219,0.07);
             transition: background 0.2s, box-shadow 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
         .dropdown-content button:active, .dropdown-content button:focus {
             background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);
@@ -147,20 +149,20 @@
 </head>
 <body>
     <header>
-        <h1>Truelocalwx</h1>
+        <h1>New-York State Weather Models</h1>
         <h2>New York</h2>
     </header>
     <div id="main-container">
         <div id="sidebar">
             <div class="dropdown" id="view-dropdown">
-                <button id="dropdown-button">Variables</button>
+                <button id="dropdown-button" tabindex="0">Variables</button>
                 <div class="dropdown-content">
-                    <button id="temp-button">2m-Temp</button>
-                    <button id="snow-8-to-1-button">Snow 8-to-1</button>
-                    <button id="snow-10-to-1-button">Snow 10-to-1</button>
-                    <button id="precip-type-rate-button">Precip Type Rate</button>
-                    <button id="wind-button">10m-Wind</button>
-                    <button id="total-precip-button">Total Precip</button>
+                    <button id="temp-button" tabindex="0">2m-Temp</button>
+                    <button id="snow-8-to-1-button" tabindex="0">Snow 8-to-1</button>
+                    <button id="snow-10-to-1-button" tabindex="0">Snow 10-to-1</button>
+                    <button id="precip-type-rate-button" tabindex="0">Precip Type Rate</button>
+                    <button id="wind-button" tabindex="0">10m-Wind</button>
+                    <button id="total-precip-button" tabindex="0">Total Precip</button>
                 </div>
             </div>
             <div style="flex:1"></div>
@@ -200,5 +202,42 @@
             }
         </style>
     <script src="{{ url_for('static', filename='NY.js') }}"></script>
+    <script>
+    // Add touch event support for Safari on iPhones
+    function addTouchAndClick(id, handler) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('click', handler);
+        el.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            handler(e);
+        }, {passive: false});
+    }
+    // Wait for DOMContentLoaded to ensure all elements exist
+    document.addEventListener('DOMContentLoaded', function() {
+        addTouchAndClick('dropdown-button', function() {
+            const dropdown = document.getElementById('view-dropdown');
+            dropdown.classList.toggle('active');
+        });
+        addTouchAndClick('temp-button', function() {
+            if (window.tempButtonHandler) window.tempButtonHandler();
+        });
+        addTouchAndClick('snow-8-to-1-button', function() {
+            if (window.snow8to1ButtonHandler) window.snow8to1ButtonHandler();
+        });
+        addTouchAndClick('snow-10-to-1-button', function() {
+            if (window.snow10to1ButtonHandler) window.snow10to1ButtonHandler();
+        });
+        addTouchAndClick('precip-type-rate-button', function() {
+            if (window.precipTypeRateButtonHandler) window.precipTypeRateButtonHandler();
+        });
+        addTouchAndClick('wind-button', function() {
+            if (window.windButtonHandler) window.windButtonHandler();
+        });
+        addTouchAndClick('total-precip-button', function() {
+            if (window.totalPrecipButtonHandler) window.totalPrecipButtonHandler();
+        });
+    });
+    </script>
 </body>
 </html>
