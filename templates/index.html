@@ -124,6 +124,16 @@
                 margin-top: 0; /* Remove any gap above the PNG */
             }
         }
+        @supports (-webkit-touch-callout: none) {
+            #image-container {
+                max-height: calc(100vh - 120px); /* Ensure space for dropdown and slider */
+                margin-top: 10px; /* Maintain gap for dropdown */
+            }
+
+            #slider {
+                margin-top: 10px; /* Ensure slider doesn't overlap */
+            }
+        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
