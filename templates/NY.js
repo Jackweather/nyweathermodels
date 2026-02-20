@@ -61,6 +61,17 @@ function updateImage() {
             imgElement.src = newSrc;
         }
         document.getElementById("slider").value = currentIndex;
+        const enlargedImg = document.getElementById("enlarged-image");
+        if (enlargedImg) {
+            if (enlargedImg.src !== newSrc) enlargedImg.src = newSrc;
+        }
+        // Update enlarged slider if present
+        const enlargedSlider = document.getElementById("enlarged-slider");
+        if (enlargedSlider) {
+            enlargedSlider.max = pngFiles.length - 1;
+            enlargedSlider.value = currentIndex;
+        }
+        document.getElementById("slider").value = currentIndex;
         localStorage.setItem("sliderPosition", currentIndex); // Save slider position
     } else {
         imgElement.src = "";
@@ -73,6 +84,11 @@ function restoreSliderPosition() {
     if (savedPosition !== null && pngFiles.length > 0) {
         currentIndex = Math.min(parseInt(savedPosition, 10), pngFiles.length - 1);
         document.getElementById("slider").value = currentIndex;
+        const enlargedSlider = document.getElementById("enlarged-slider");
+        if (enlargedSlider) {
+            enlargedSlider.max = pngFiles.length - 1;
+            enlargedSlider.value = currentIndex;
+        }
         updateImage();
     }
 }
@@ -81,6 +97,14 @@ function restoreSliderPosition() {
 document.getElementById("slider").addEventListener("change", (event) => {
     localStorage.setItem("sliderPosition", event.target.value);
 });
+
+// Save enlarged slider position to localStorage when changed
+const enlargedSliderEl = document.getElementById("enlarged-slider");
+if (enlargedSliderEl) {
+    enlargedSliderEl.addEventListener("change", (event) => {
+        localStorage.setItem("sliderPosition", event.target.value);
+    });
+}
 
 // Automatically fetch new PNGs at regular intervals
 function startAutoFetch(interval = 5000) { // Updated interval: 5 seconds
@@ -118,6 +142,26 @@ document.body.addEventListener("click", (event) => {
         updateImage();
     }
 });
+
+// Handle taps or clicks on the enlarge overlay to update the enlarged slider
+const enlargeOverlay = document.getElementById('enlarge-overlay');
+if (enlargeOverlay) {
+    enlargeOverlay.addEventListener('click', (event) => {
+        const enlargedSlider = document.getElementById('enlarged-slider');
+        if (!enlargedSlider) return;
+        const rect = enlargedSlider.getBoundingClientRect();
+        const clickX = event.clientX;
+        if (clickX >= rect.left && clickX <= rect.right) {
+            const sliderWidth = rect.width;
+            const relativeClickX = clickX - rect.left;
+            const newSliderValue = Math.round((relativeClickX / sliderWidth) * enlargedSlider.max);
+            enlargedSlider.value = newSliderValue;
+            currentIndex = newSliderValue;
+            updateImage();
+            preloadAdjacentImages();
+        }
+    });
+}
 
 // Handle the Temperature button click
 document.getElementById("temp-button").addEventListener("click", () => {
@@ -176,6 +220,12 @@ async function handleViewButtonClick(view) {
     hideLoadingOverlay();
     document.getElementById("slider").disabled = false;
     buttons.forEach(button => button.disabled = false);
+    // Keep enlarged slider synced
+    const enlargedSlider = document.getElementById('enlarged-slider');
+    if (enlargedSlider) {
+        enlargedSlider.max = pngFiles.length - 1;
+        enlargedSlider.value = currentIndex;
+    }
 }
 function showLoadingOverlay() {
     document.getElementById("loading-overlay").style.display = "flex";
@@ -229,11 +279,15 @@ document.body.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft" && currentIndex > 0) {
         currentIndex -= 1; // Move to the previous image by 1
         document.getElementById("slider").value = currentIndex;
+        const enlargedSlider = document.getElementById('enlarged-slider');
+        if (enlargedSlider) enlargedSlider.value = currentIndex;
         updateImage();
         preloadAdjacentImages();
     } else if (event.key === "ArrowRight" && currentIndex < pngFiles.length - 1) {
         currentIndex += 1; // Move to the next image by 1
         document.getElementById("slider").value = currentIndex;
+        const enlargedSlider = document.getElementById('enlarged-slider');
+        if (enlargedSlider) enlargedSlider.value = currentIndex;
         updateImage();
         preloadAdjacentImages();
     }
@@ -251,11 +305,77 @@ document.getElementById("slider").addEventListener("input", (event) => {
     }
 });
 
+// Ensure the enlarged slider behaves the same
+const enlargedSlider = document.getElementById('enlarged-slider');
+if (enlargedSlider) {
+    enlargedSlider.addEventListener('input', (event) => {
+        const newValue = parseInt(event.target.value, 10);
+        if (Math.abs(newValue - currentIndex) === 1) {
+            currentIndex = newValue;
+            document.getElementById('slider').value = currentIndex;
+            updateImage();
+            preloadAdjacentImages();
+        } else {
+            event.target.value = currentIndex;
+        }
+    });
+}
+
 // Toggle dropdown visibility
 document.getElementById("dropdown-button").addEventListener("click", () => {
     const dropdown = document.getElementById("view-dropdown");
     dropdown.classList.toggle("active");
 });
+
+// Toggle enlarge overlay dropdown
+const enlargeDropdownButton = document.getElementById('enlarge-dropdown-button');
+if (enlargeDropdownButton) {
+    enlargeDropdownButton.addEventListener('click', () => {
+        const dropdown = document.getElementById('enlarge-view-dropdown');
+        dropdown.classList.toggle('active');
+    });
+}
+
+// Enlarge button opens the overlay
+const enlargeBtn = document.getElementById('enlarge-button');
+if (enlargeBtn) {
+    enlargeBtn.addEventListener('click', () => {
+        const overlay = document.getElementById('enlarge-overlay');
+        if (!overlay) return;
+        overlay.style.display = 'flex';
+        // sync enlarged image and slider
+        const enlargedImg = document.getElementById('enlarged-image');
+        if (enlargedImg && pngFiles.length > 0) enlargedImg.src = `${pngFiles[currentIndex]}?t=${new Date().getTime()}`;
+        const enlargedSlider = document.getElementById('enlarged-slider');
+        if (enlargedSlider) {
+            enlargedSlider.max = pngFiles.length > 0 ? pngFiles.length - 1 : 0;
+            enlargedSlider.value = currentIndex;
+        }
+    });
+}
+
+// Close enlarge overlay
+const closeEnlarge = document.getElementById('close-enlarge');
+if (closeEnlarge) {
+    closeEnlarge.addEventListener('click', () => {
+        const overlay = document.getElementById('enlarge-overlay');
+        if (overlay) overlay.style.display = 'none';
+    });
+}
+
+// Handle clicks on the small dropdown inside overlay to change view
+const overlayDropdownButtons = document.querySelectorAll('#enlarge-overlay .dropdown-content button');
+if (overlayDropdownButtons.length) {
+    overlayDropdownButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const view = btn.getAttribute('data-view');
+            if (view) handleViewButtonClick(view);
+            // close the overlay dropdown
+            const dd = document.getElementById('enlarge-view-dropdown');
+            if (dd) dd.classList.remove('active');
+        });
+    });
+}
 
 // Initialize the app with the restored view
 refreshPngList();
