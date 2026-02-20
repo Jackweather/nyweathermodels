@@ -159,16 +159,19 @@
     </header>
     <div id="main-container">
         <div id="sidebar">
-            <div class="dropdown" id="view-dropdown">
-                <button id="dropdown-button">Variables</button>
-                <div class="dropdown-content">
-                    <button id="temp-button">2m-Temp</button>
-                    <button id="snow-8-to-1-button">Snow 8-to-1</button>
-                    <button id="snow-10-to-1-button">Snow 10-to-1</button>
-                    <button id="precip-type-rate-button">Precip Type Rate</button>
-                    <button id="wind-button">10m-Wind</button>
-                    <button id="total-precip-button">Total Precip</button>
+            <div style="display:flex; gap:8px; align-items:center; width:100%; max-width:320px;">
+                <div class="dropdown" id="view-dropdown" style="flex:1;">
+                    <button id="dropdown-button">Variables</button>
+                    <div class="dropdown-content">
+                        <button id="temp-button">2m-Temp</button>
+                        <button id="snow-8-to-1-button">Snow 8-to-1</button>
+                        <button id="snow-10-to-1-button">Snow 10-to-1</button>
+                        <button id="precip-type-rate-button">Precip Type Rate</button>
+                        <button id="wind-button">10m-Wind</button>
+                        <button id="total-precip-button">Total Precip</button>
+                    </div>
                 </div>
+                <button id="enlarge-button" style="padding:10px 12px; border-radius:5px; border:1px solid #ccc; background:white; cursor:pointer;">Enlarge</button>
             </div>
         </div>
         <div id="content">
@@ -186,6 +189,34 @@
             </div>
         </div>
     </div>
+        <!-- Enlarge overlay markup -->
+        <div id="enlarge-overlay" style="display:none; position:fixed; inset:0; background:#000; z-index:1000; align-items:center; justify-content:center;">
+            <div style="position:relative; width:100%; height:100%; display:flex; flex-direction:column; color:#fff;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; z-index:1010;">
+                    <div class="dropdown" id="enlarge-view-dropdown" style="width:220px;">
+                        <button id="enlarge-dropdown-button">Variables</button>
+                        <div class="dropdown-content">
+                            <button data-view="temp">2m-Temp</button>
+                            <button data-view="snow_8_to_1">Snow 8-to-1</button>
+                            <button data-view="snow_10_to_1">Snow 10-to-1</button>
+                            <button data-view="precip_type_rate">Precip Type Rate</button>
+                            <button data-view="wind">10m-Wind</button>
+                            <button data-view="total_precip">Total Precip</button>
+                        </div>
+                    </div>
+                    <button id="close-enlarge" style="padding:8px 12px; border-radius:5px; border:1px solid #ccc; background:white; cursor:pointer;">Close</button>
+                </div>
+                <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+                    <div style="width:100%; display:flex; align-items:center; justify-content:center;">
+                        <img id="enlarged-image" src="" alt="Enlarged PNG" style="height:70vh; width:auto; max-width:100%; box-shadow:0 2px 10px rgba(0,0,0,0.5);" />
+                    </div>
+                </div>
+                <div style="padding:12px; width:100%; max-width:900px; margin:0 auto 24px; z-index:1010;">
+                    <input type="range" id="enlarged-slider" min="0" max="0" value="0" step="1" style="width:100%;">
+                </div>
+            </div>
+        </div>
+
         <style>
             @keyframes spin {
                 0% { transform: rotate(0deg); }
