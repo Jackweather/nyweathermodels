@@ -149,6 +149,19 @@
     <!-- Fullscreen overlay -->
     <div id="fullscreen-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:10000; align-items:center; justify-content:center; flex-direction:column;"> 
         <button id="fullscreen-close" style="position:absolute; top:18px; right:18px; background:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">Close</button>
+        <div style="position:absolute; top:12px; left:18px; display:flex; gap:8px; align-items:center;">
+            <div class="dropdown" id="fs-left-view-dropdown" style="position:relative;">
+                <button id="fs-left-dropdown-button" style="padding:8px 12px; border-radius:6px; border:none; background:#fcfbfbf5; color:rgb(0, 0, 0); cursor:pointer;">Variables</button>
+                <div class="dropdown-content" style="left:0; right:auto;">
+                    <button id="fs-left-temp-button">2m-Temp</button>
+                    <button id="fs-left-snow-8-to-1-button">Snow 8-to-1</button>
+                    <button id="fs-left-snow-10-to-1-button">Snow 10-to-1</button>
+                    <button id="fs-left-precip-type-rate-button">Precip Type Rate</button>
+                    <button id="fs-left-wind-button">10m-Wind</button>
+                    <button id="fs-left-total-precip-button">Total Precip</button>
+                </div>
+            </div>
+        </div>
         <div style="max-width:95%; max-height:85%; display:flex; align-items:center; justify-content:center;">
             <img id="fullscreen-image" src="" alt="Fullscreen PNG" style="max-width:100%; max-height:100%; object-fit:contain;" />
         </div>
@@ -185,20 +198,33 @@
             const mainSlider = document.getElementById('slider');
             const fsClose = document.getElementById('fullscreen-close');
 
+            // Separate fullscreen state so it does NOT affect main viewer
+            let fsPngFiles = [];
+            let fsCurrentIndex = 0;
+
             function openOverlay(){
-                // copy current image and slider state
-                fsImage.src = mainImage.src || '';
+                // copy png list and index from the main script without linking
                 try {
-                    fsSlider.min = mainSlider.min;
-                    fsSlider.max = mainSlider.max;
-                    fsSlider.step = mainSlider.step || 1;
-                    fsSlider.value = mainSlider.value;
-                } catch(e){}
+                    fsPngFiles = (typeof pngFiles !== 'undefined') ? pngFiles.slice() : [];
+                    fsCurrentIndex = (typeof currentIndex !== 'undefined') ? currentIndex : 0;
+                } catch(e){ fsPngFiles = []; fsCurrentIndex = 0; }
+
+                // configure slider for fullscreen
+                fsSlider.min = fsPngFiles.length > 0 ? 0 : 0;
+                fsSlider.max = fsPngFiles.length > 0 ? Math.max(0, fsPngFiles.length - 1) : 0;
+                fsSlider.step = 1;
+                fsSlider.value = fsCurrentIndex;
+
+                // set fullscreen image independently
+                if (fsPngFiles.length > 0){
+                    fsImage.src = `${fsPngFiles[fsCurrentIndex]}?t=${new Date().getTime()}`;
+                } else {
+                    // fallback to whatever the main image currently shows
+                    fsImage.src = mainImage.src || '';
+                }
 
                 overlay.style.display = 'flex';
-                // try to enter browser fullscreen for overlay
                 if (overlay.requestFullscreen) overlay.requestFullscreen().catch(()=>{});
-                // focus for key handlers
                 fsSlider.focus();
             }
 
@@ -207,41 +233,55 @@
                 try { if (document.fullscreenElement) document.exitFullscreen().catch(()=>{}); } catch(e){}
             }
 
-            // When fullscreen slider moves, forward value to main slider and trigger input
+            // When fullscreen slider moves, only update fullscreen image (do NOT update main viewer)
             fsSlider.addEventListener('input', (e)=>{
-                if (!mainSlider) return;
-                mainSlider.value = e.target.value;
-                mainSlider.dispatchEvent(new Event('input'));
-                // sync image after main slider updates
-                setTimeout(()=>{ fsImage.src = mainImage.src || fsImage.src; }, 10);
+                const v = Number(e.target.value);
+                fsCurrentIndex = v;
+                if (fsPngFiles.length > 0){
+                    fsImage.src = `${fsPngFiles[fsCurrentIndex]}?t=${new Date().getTime()}`;
+                }
             });
 
-            // When main slider changes (likely due to NY.js), update fullscreen image if open
+            // If main slider changes (NY.js), update fullscreen's copy only if overlay is open
             if (mainSlider){
                 mainSlider.addEventListener('input', ()=>{
                     if (overlay.style.display !== 'none'){
-                        fsImage.src = mainImage.src || fsImage.src;
-                        try { fsSlider.value = mainSlider.value; } catch(e){}
+                        try {
+                            fsPngFiles = (typeof pngFiles !== 'undefined') ? pngFiles.slice() : fsPngFiles;
+                            fsCurrentIndex = (typeof currentIndex !== 'undefined') ? currentIndex : fsCurrentIndex;
+                            fsSlider.max = fsPngFiles.length > 0 ? Math.max(0, fsPngFiles.length - 1) : 0;
+                            fsSlider.value = fsCurrentIndex;
+                            if (fsPngFiles.length > 0) fsImage.src = `${fsPngFiles[fsCurrentIndex]}?t=${new Date().getTime()}`;
+                        } catch(e){}
                     }
                 });
             }
 
+            // Capture-phase keydown handler to prevent NY.js from handling arrow keys when fullscreen is open
+            document.addEventListener('keydown', function(e){
+                if (overlay.style.display === 'none') return; // let NY.js handle
+                if (e.key === 'Escape'){
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                    closeOverlay();
+                    return;
+                }
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                    const dir = e.key === 'ArrowLeft' ? -1 : 1;
+                    let v = fsCurrentIndex + dir;
+                    v = Math.max(Number(fsSlider.min), Math.min(Number(fsSlider.max), v));
+                    fsCurrentIndex = v;
+                    fsSlider.value = v;
+                    // update fullscreen image
+                    if (fsPngFiles.length > 0) fsImage.src = `${fsPngFiles[fsCurrentIndex]}?t=${new Date().getTime()}`;
+                }
+            }, true);
+
             // Clicking the fullscreen button opens overlay
             fsButton.addEventListener('click', openOverlay);
             fsClose.addEventListener('click', closeOverlay);
-
-            // Close on Escape
-            document.addEventListener('keydown', (e)=>{
-                if (e.key === 'Escape' && overlay.style.display !== 'none') closeOverlay();
-                if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && overlay.style.display !== 'none'){
-                    const dir = e.key === 'ArrowLeft' ? -1 : 1;
-                    const step = Number(fsSlider.step) || 1;
-                    let v = Number(fsSlider.value) + dir*step;
-                    v = Math.max(Number(fsSlider.min), Math.min(Number(fsSlider.max), v));
-                    fsSlider.value = v;
-                    fsSlider.dispatchEvent(new Event('input'));
-                }
-            });
 
             // Close when clicking outside the image (on overlay background)
             overlay.addEventListener('click', (e)=>{
@@ -250,13 +290,52 @@
 
             // When clicking anywhere on the page, focus the appropriate slider
             document.addEventListener('click', (e) => {
-                // prefer the fullscreen slider when overlay is visible
                 if (overlay.style.display !== 'none'){
                     try { fsSlider.focus(); } catch(err){}
                 } else {
                     try { if (mainSlider) mainSlider.focus(); } catch(err){}
                 }
             });
+
+            // Left fullscreen dropdown toggle (top-left)
+            const fsLeftDropdown = document.getElementById('fs-left-view-dropdown');
+            const fsLeftButton = document.getElementById('fs-left-dropdown-button');
+            fsLeftButton.addEventListener('click', (ev)=>{ ev.stopPropagation(); fsLeftDropdown.classList.toggle('active'); });
+            // Close left dropdown when clicking elsewhere
+            document.addEventListener('click', ()=> fsLeftDropdown.classList.remove('active'));
+
+            // Wire left fullscreen dropdown buttons to behave like main screen (call main handler)
+            function wireLeftFsButton(id, view){
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                btn.addEventListener('click', (ev)=>{
+                    ev.stopPropagation();
+                    try { saveCurrentView(view); } catch(e){}
+                    try { handleViewButtonClick(view); } catch(e){ console.error('handleViewButtonClick not available', e); }
+                    // Also update fullscreen's own list so fullscreen shows the new view immediately
+                    (async ()=>{
+                        try {
+                            const resp = await fetch(`/list_pngs/${view}`);
+                            if (resp.ok){
+                                const list = await resp.json();
+                                fsPngFiles = list || [];
+                                fsCurrentIndex = 0;
+                                fsSlider.max = fsPngFiles.length > 0 ? Math.max(0, fsPngFiles.length - 1) : 0;
+                                fsSlider.value = fsCurrentIndex;
+                                if (fsPngFiles.length > 0) fsImage.src = `${fsPngFiles[0]}?t=${new Date().getTime()}`;
+                                else fsImage.src = '';
+                            }
+                        } catch(err){ console.error('Failed to update fullscreen list', err); }
+                    })();
+                    fsLeftDropdown.classList.remove('active');
+                });
+            }
+            wireLeftFsButton('fs-left-temp-button', 'temp');
+            wireLeftFsButton('fs-left-snow-8-to-1-button', 'snow_8_to_1');
+            wireLeftFsButton('fs-left-snow-10-to-1-button', 'snow_10_to_1');
+            wireLeftFsButton('fs-left-precip-type-rate-button', 'precip_type_rate');
+            wireLeftFsButton('fs-left-wind-button', 'wind');
+            wireLeftFsButton('fs-left-total-precip-button', 'total_precip');
         })();
     </script>
 </body>
