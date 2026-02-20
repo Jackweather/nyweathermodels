@@ -149,23 +149,18 @@
     </header>
     <div id="main-container">
         <div id="sidebar">
-            <select id="view-dropdown" onchange="handleDropdownChange(event)">
-                <option value="temp">2m-Temp</option>
-                <option value="snow_8_to_1">Snow 8-to-1</option>
-                <option value="snow_10_to_1">Snow 10-to-1</option>
-                <option value="precip_type_rate">Precip Type Rate</option>
-                <option value="wind">10m-Wind</option>
-                <option value="total_precip">Total Precip</option>
-            </select>
+            <div class="dropdown" id="view-dropdown">
+                <button id="dropdown-button">Variables</button>
+                <div class="dropdown-content">
+                    <button id="temp-button">2m-Temp</button>
+                    <button id="snow-8-to-1-button">Snow 8-to-1</button>
+                    <button id="snow-10-to-1-button">Snow 10-to-1</button>
+                    <button id="precip-type-rate-button">Precip Type Rate</button>
+                    <button id="wind-button">10m-Wind</button>
+                    <button id="total-precip-button">Total Precip</button>
+                </div>
+            </div>
         </div>
-
-        <script>
-            function handleDropdownChange(event) {
-                const view = event.target.value;
-                saveCurrentView(view); // Save the selected view
-                handleViewButtonClick(view); // Handle the view change
-            }
-        </script>
         <div id="content">
             <div id="image-container">
                 <img id="current-image" src="" alt="HRRR PNG" />
