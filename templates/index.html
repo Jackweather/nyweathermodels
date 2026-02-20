@@ -1,202 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HRRR PNG Viewer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRRR PNG Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background-color: #87CEEB; /* Light blue */
+            color: white;
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        #main-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 10px;
+        }
+        #view-dropdown {
+            margin: 10px 0;
+            width: 100%;
+            max-width: 300px;
+        }
+        .dropdown {
+            position: relative;
+            width: 100%;
+        }
+        .dropdown button {
+            background-color: white; /* Traditional white dropdown */
+            color: black; /* Black text for contrast */
+            border: 1px solid #ccc; /* Light gray border */
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            text-align: left;
+        }
+        .dropdown button:hover {
+            background-color: #f0f0f0; /* Light gray on hover */
+        }
+        .dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: white; /* White background for dropdown items */
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            width: 100%;
+            display: none;
+            flex-direction: column;
+            margin-top: 10px;
+            border: 1px solid #ccc; /* Light gray border */
+        }
+        .dropdown-content button {
+            width: 100%;
+            text-align: left;
+            padding: 10px;
+            border: none;
+            background: none;
+            color: black; /* Black text for dropdown items */
+            cursor: pointer;
+        }
+        .dropdown-content button:hover {
+            background-color: #f0f0f0; /* Light gray on hover */
+        }
+        .dropdown.active .dropdown-content {
+            display: flex;
+        }
+        #content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        #image-container {
+            max-width: 100%;
+            max-height: 80vh; /* Increased height to take up more room */
+            margin-top: 10px; /* Move the PNG closer to the button */
+        }
+        #image-container img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        #controls {
+            margin: 20px;
+            width: 100%;
+            max-width: 300px;
+        }
+        #slider {
+            width: 100%;
+            height: 10px; /* Make the slider bar thicker */
+        }
+        @media (max-width: 768px) {
+            #image-container {
+                max-height: 100vh; /* Extend the PNG to take up more vertical space */
+                margin-top: 0; /* Remove the gap above the PNG */
+            }
+        }
+        @media (max-width: 768px) and (orientation: portrait) {
+            #image-container {
+                max-height: 95vh; /* Expand the PNG to take up almost the full vertical space in portrait mode */
+                margin-top: 0; /* Remove any gap above the PNG */
+            }
+        }
+        @supports (-webkit-touch-callout: none) {
+            #image-container {
+                max-height: calc(100vh - 120px); /* Ensure space for dropdown and slider */
+                margin-top: 10px; /* Maintain gap for dropdown */
+            }
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-}
-
-header {
-    background-color: #87CEEB;
-    color: white;
-    padding: 10px;
-    text-align: center;
-}
-
-header h1 {
-    margin: 0;
-    font-size: 1.3rem;
-}
-
-#main-container {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    align-items: center;
-    padding: 10px;
-}
-
-.dropdown {
-    position: relative;
-    width: 100%;
-    max-width: 300px;
-    margin-bottom: 10px;
-}
-
-.dropdown button {
-    background-color: white;
-    color: black;
-    border: 1px solid #ccc;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    width: 100%;
-    text-align: left;
-}
-
-.dropdown-content {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: white;
-    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-    z-index: 1000;
-    width: 100%;
-    display: none;
-    flex-direction: column;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-}
-
-.dropdown-content button {
-    padding: 10px;
-    border: none;
-    background: none;
-    text-align: left;
-    cursor: pointer;
-}
-
-.dropdown.active .dropdown-content {
-    display: flex;
-}
-
-#content {
-    flex: 1;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-#image-container {
-    width: 100%;
-    height: 60vh;
-}
-
-#image-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-#controls {
-    width: 100%;
-    max-width: 400px;
-    margin-top: 10px;
-}
-
-#slider {
-    width: 100%;
-    height: 12px;
-}
-
-/* 🔥 MOBILE PORTRAIT FULLSCREEN MODE */
-@media (max-width: 768px) and (orientation: portrait) {
-
-    body {
-        height: 100vh;
-    }
-
-    #main-container {
-        padding: 0;
-    }
-
-    #image-container {
-        width: 100vw;
-        height: calc(100vh - 150px); /* Adjust if needed */
-    }
-
-    #image-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-}
-
-/* Loading Spinner */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-#loading-overlay {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(255,255,255,0.7);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-}
-</style>
+            #slider {
+                margin-top: 10px; /* Ensure slider doesn't overlap */
+            }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(255,255,255,0.7);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
-
 <body>
-
-<header>
-    <h1>New-York-State Weather Models</h1>
-</header>
-
-<div id="main-container">
-
-    <div class="dropdown" id="view-dropdown">
-        <button id="dropdown-button">Variables</button>
-        <div class="dropdown-content">
-            <button id="temp-button">2m-Temp</button>
-            <button id="snow-8-to-1-button">Snow 8-to-1</button>
-            <button id="snow-10-to-1-button">Snow 10-to-1</button>
-            <button id="precip-type-rate-button">Precip Type Rate</button>
-            <button id="wind-button">10m-Wind</button>
-            <button id="total-precip-button">Total Precip</button>
+    <header>
+        <h1>New-York-State Weather models</h1>
+        
+    </header>
+    <div id="main-container">
+        <div id="sidebar">
+            <div class="dropdown" id="view-dropdown">
+                <button id="dropdown-button">Variables</button>
+                <div class="dropdown-content">
+                    <button id="temp-button">2m-Temp</button>
+                    <button id="snow-8-to-1-button">Snow 8-to-1</button>
+                    <button id="snow-10-to-1-button">Snow 10-to-1</button>
+                    <button id="precip-type-rate-button">Precip Type Rate</button>
+                    <button id="wind-button">10m-Wind</button>
+                    <button id="total-precip-button">Total Precip</button>
+                </div>
+            </div>
+        </div>
+        <div id="content">
+            <div id="image-container">
+                <img id="current-image" src="" alt="HRRR PNG" />
+            </div>
+            <div id="controls">
+                <input type="range" id="slider" min="0" max="0" value="0" step="1">
+            </div>
+            <div id="loading-overlay" style="display:none; position:absolute; top:0; left:0; width:100vw; height:100vh; background:rgba(255,255,255,0.7); z-index:200; align-items:center; justify-content:center;">
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="spinner" style="border:8px solid #f3f3f3; border-top:8px solid #3498db; border-radius:50%; width:60px; height:60px; animation:spin 1s linear infinite;"></div>
+                    <div style="margin-top:16px; font-size:1.2rem; color:#3498db;">Loading images...</div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div id="content">
-
-        <div id="image-container">
-            <img id="current-image" src="" alt="HRRR PNG">
-        </div>
-
-        <div id="controls">
-            <input type="range" id="slider" min="0" max="0" value="0" step="1">
-        </div>
-
-    </div>
-
-</div>
-
-<div id="loading-overlay">
-    <div style="display:flex; flex-direction:column; align-items:center;">
-        <div style="border:8px solid #f3f3f3; border-top:8px solid #3498db; border-radius:50%; width:60px; height:60px; animation:spin 1s linear infinite;"></div>
-        <div style="margin-top:16px; font-size:1.2rem; color:#3498db;">Loading images...</div>
-    </div>
-</div>
-
-<script src="/static/NY.js"></script>
-
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            #loading-overlay {
+                display: none;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(255,255,255,0.7);
+                z-index: 200;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+    <script src="/static/NY.js"></script>
 </body>
 </html>
