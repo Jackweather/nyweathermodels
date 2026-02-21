@@ -293,7 +293,7 @@ def plot_precip(precip_path, step):
         ]
     )
     ax.text(
-        text_x, text_y_base, "Truelocalwx.com",
+        text_x, text_y_base, "NYWeatherModels.com",
         fontsize=7, color="black", ha="right", va="bottom",
         fontweight="normal", alpha=0.85,
         transform=ccrs.PlateCarree(),
