@@ -55,6 +55,10 @@
       let files = [];
       let idx = 0;
       let isLoading = false; // true while preloading images
+      let preloadMap = {}; // url -> Image object
+      let preloadToken = null; // token used for cache-busting during a preload session
+      let rafScheduled = false;
+      let pendingIdx = null;
 
       // Try to load files from localStorage (set by opener)
       try{
@@ -70,7 +74,13 @@
       function update(){
         if (files.length > 0){
           idx = Math.max(0, Math.min(files.length-1, idx));
-          img.src = files[idx] + '?t=' + Date.now();
+          const file = files[idx];
+          // prefer using the preloaded Image object's src so we reuse in-memory data
+          if (preloadMap[file] && preloadMap[file].src){
+            img.src = preloadMap[file].src;
+          } else {
+            img.src = file + (preloadToken ? ('?t=' + preloadToken) : '');
+          }
           slider.max = Math.max(0, files.length-1);
           slider.value = idx;
           slider.disabled = isLoading || files.length === 0;
@@ -82,7 +92,18 @@
         }
       }
 
-      slider.addEventListener('input', ()=>{ if (isLoading) return; idx = Number(slider.value); update(); });
+      // Throttle rapid slider input events with requestAnimationFrame and use preloaded images
+      slider.addEventListener('input', ()=>{
+        if (isLoading) return;
+        pendingIdx = Number(slider.value);
+        if (!rafScheduled){
+          rafScheduled = true;
+          requestAnimationFrame(()=>{
+            rafScheduled = false;
+            if (pendingIdx !== null){ idx = pendingIdx; pendingIdx = null; update(); }
+          });
+        }
+      });
 
       document.addEventListener('keydown',(e)=>{
         if (isLoading) return;
@@ -97,11 +118,15 @@
 
       // Helper to preload image URLs, resolves when all attempted
       function preloadImages(urls){
+        // clear previous preload map and set a session token so displayed src matches preloaded src
+        preloadMap = {};
+        preloadToken = Date.now();
+        const token = preloadToken;
         return Promise.all(urls.map(u=>new Promise((resolve)=>{
           const im = new Image();
-          im.onload = () => resolve({url:u,ok:true});
-          im.onerror = () => resolve({url:u,ok:false});
-          im.src = u + '?t=' + Date.now();
+          im.onload = () => { preloadMap[u] = im; resolve({url:u,ok:true}); };
+          im.onerror = () => { preloadMap[u] = im; resolve({url:u,ok:false}); };
+          im.src = u + '?t=' + token;
         })));
       }
 
