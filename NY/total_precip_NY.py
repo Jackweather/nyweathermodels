@@ -1,7 +1,8 @@
 import os
 import requests
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import xarray as xr
 import matplotlib
 matplotlib.use('Agg')
@@ -204,14 +205,15 @@ def plot_precip(precip_path, step):
     # Apply mask
     precip2d = np.where(ny_mask, precip2d, np.nan)
 
-    # Title/time calculation
-    run_hour_map = {"00": 20, "06": 2, "12": 8, "18": 14}  # Map UTC run hour to local time
-    base_time = datetime.strptime(f"{date_str} {hour_str}", "%Y%m%d %H")  # Base UTC time
-    valid_time = base_time + timedelta(hours=step)  # Forecast valid time in UTC
-    base_local_hour = run_hour_map.get(hour_str, int(hour_str))  # Local time for the run hour
-    local_hour = (base_local_hour + (step - 1)) % 24  # Calculate local hour for the forecast step
-    local_time = datetime.strptime(f"{local_hour:02d}", "%H").strftime("%I %p")  # Format as 12-hour time
-    day_of_week = (base_time + timedelta(hours=step - 1)).strftime('%A')  # Adjust day if it crosses midnight
+    # Title/time calculation — use timezone-aware conversion so DST is handled
+    base_time = datetime.strptime(f"{date_str} {hour_str}", "%Y%m%d %H")
+    # treat base_time as UTC
+    base_time_utc = base_time.replace(tzinfo=timezone.utc)
+    valid_time = base_time_utc + timedelta(hours=step)  # Forecast valid time in UTC
+    # convert valid_time to America/New_York to get local hour and weekday (handles DST)
+    local_valid = valid_time.astimezone(ZoneInfo('America/New_York'))
+    local_time = local_valid.strftime('%I %p')
+    day_of_week = local_valid.strftime('%A')
 
     title = (
         f"HRRR Total Precipitation — New York (NY)\n"
