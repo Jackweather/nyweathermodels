@@ -1,3 +1,5 @@
+
+# --- Utility to fetch Northeast/Mid-Atlantic/Ohio/VA geojson and compute extent/boundary ---
 import os
 import requests
 import shutil
@@ -15,43 +17,52 @@ import cartopy.feature as cfeature
 import geopandas as gpd
 import gc  # Add garbage collection module
 
-# --- Utility to fetch NY geojson and compute extent/boundary ---
-def get_ny_geodata(padding_frac=0.09):
-    url = "https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json"
-    r = requests.get(url)
+# --- Utility to fetch Northeast/Mid-Atlantic/Ohio/VA geojson and compute extent/boundary ---
+def get_eastern_geodata(padding_frac=0.09):
+    # States: ME, NH, VT, MA, RI, CT, NY, NJ, PA, OH, VA, MD, DE, DC, WV
+    state_fips = [
+        '23', '33', '50', '25', '44', '09', '36', '34', '42', '39', '51', '24', '10', '11', '54'
+    ]
+    # Counties
+    url_counties = "https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json"
+    r = requests.get(url_counties)
     r.raise_for_status()
     geojson = r.json()
-
     for feat in geojson.get("features", []):
         feat.setdefault("properties", {})
         feat["properties"]["fips"] = feat.get("id", "")
-
     gdf = gpd.GeoDataFrame.from_features(geojson["features"])
     gdf = gdf.set_crs("EPSG:4326")
     gdf["fips"] = gdf["fips"].astype(str)
-    ny = gdf[gdf["fips"].str.startswith("36")]
-    if ny.empty:
-        raise RuntimeError("No New York counties found in GeoJSON.")
-    minx, miny, maxx, maxy = ny.total_bounds
+    region_gdf = gdf[gdf["fips"].str[:2].isin(state_fips)]
+    if region_gdf.empty:
+        raise RuntimeError("No region counties found in GeoJSON.")
+    minx, miny, maxx, maxy = region_gdf.total_bounds
     pad_x = (maxx - minx) * padding_frac
     pad_y = (maxy - miny) * padding_frac
     extent = [minx - pad_x, maxx + pad_x, miny - pad_y, maxy + pad_y]
-    state_outline = ny.unary_union
-    return ny, extent, state_outline
-# Acquire NY geodata once
-ny_gdf, NY_EXTENT, ny_state_outline = get_ny_geodata()
+    # State outlines
+    url_states = "https://www2.census.gov/geo/tiger/GENZ2022/shp/cb_2022_us_state_20m.zip"
+    states_gdf = gpd.read_file(url_states)
+    region_states_gdf = states_gdf[states_gdf['STATEFP'].isin(state_fips)]
+    region_outline = region_states_gdf.unary_union
+    return region_gdf, extent, region_outline, region_states_gdf
+
+# Acquire region geodata once
+region_gdf, REGION_EXTENT, region_outline, region_states_gdf = get_eastern_geodata()
+
 
 # Set base directory for HRRR output
 BASE_DIR = '/var/data'
 
-# Output directories
-grib_dir = os.path.join(BASE_DIR, "snow_8_to_1_NY", "grib")
-png_dir = os.path.join(BASE_DIR, "snow_8_to_1_NY", "png")
+# Output directories (update to *_EAST)
+grib_dir = os.path.join(BASE_DIR, "snow_8_to_1_EAST", "grib")
+png_dir = os.path.join(BASE_DIR, "snow_8_to_1_EAST", "png")
 os.makedirs(grib_dir, exist_ok=True)
 os.makedirs(png_dir, exist_ok=True)
 
 # File to track completed forecast steps for the current run
-processed_steps_file = os.path.join(BASE_DIR, "snow_8_to_1_NY", "processed_steps.txt")
+processed_steps_file = os.path.join(BASE_DIR, "snow_8_to_1_EAST", "processed_steps.txt")
 
 # Clear the processed steps file at the start of a new run
 if os.path.exists(processed_steps_file):
@@ -152,6 +163,7 @@ def get_hrrr_grib(steps, variable):
                 print(f"Failed to download {variable} for both runs (step {step})")
     return file_paths
 
+
 # --- Plotting function ---
 def plot_weasd_surface(weasd_path, step):
     try:
@@ -188,19 +200,7 @@ def plot_weasd_surface(weasd_path, step):
         Lon2d, Lat2d = lons_plot, lats
         weasd2d = weasd.squeeze()
 
-    # Mask to New York polygon
-    from matplotlib.path import Path
-    polys = list(ny_state_outline.geoms) if hasattr(ny_state_outline, "geoms") else [ny_state_outline]
-    ny_mask = np.zeros(Lon2d.size, dtype=bool)
-    pts = np.vstack((Lon2d.ravel(), Lat2d.ravel())).T
-    for poly in polys:
-        coords = np.array(poly.exterior.coords)
-        path = Path(coords)  # coords are (lon, lat)
-        ny_mask |= path.contains_points(pts)
-    ny_mask = ny_mask.reshape(Lon2d.shape)
-
-    # Apply mask
-    weasd2d = np.where(ny_mask, weasd2d, np.nan)
+    # No masking: plot full grid
 
     # Title/time calculation — use timezone-aware conversion so DST is handled
     base_time = datetime.strptime(f"{date_str} {hour_str}", "%Y%m%d %H")
@@ -213,17 +213,17 @@ def plot_weasd_surface(weasd_path, step):
     day_of_week = local_valid.strftime('%A')
 
     title = (
-        f"HRRR Surface Snow Depth (Snow Liquid Ratio 8:1) — New York (NY)\n"
+        f"HRRR Surface Snow Depth (Snow Liquid Ratio 8:1) — Northeast US\n"
         f"Valid: {valid_time.strftime('%Y-%m-%d %HZ')} ({day_of_week}, {local_time})  "
         f"Run: {hour_str}Z  Forecast Hour: {step}"
     )
 
     # Plotting setup
-    fig = plt.figure(figsize=(10, 7), dpi=300, facecolor='white')
+    fig = plt.figure(figsize=(12, 9), dpi=300, facecolor='white')
     fig.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.16)
     ax = plt.axes(projection=ccrs.PlateCarree(), facecolor='white')
-    ax.set_extent(NY_EXTENT, crs=ccrs.PlateCarree())
-    ax.set_title(title, fontsize=10, fontweight='bold', pad=10)
+    ax.set_extent(REGION_EXTENT, crs=ccrs.PlateCarree())
+    ax.set_title(title, fontsize=11, fontweight='bold', pad=10)
 
     # Base map
     ax.add_feature(cfeature.LAND, facecolor='white')
@@ -243,21 +243,6 @@ def plot_weasd_surface(weasd_path, step):
         zorder=1
     )
 
-    # Add snow depth values every 0.5 degrees latitude and longitude within the mask
-    for lat in np.arange(np.floor(Lat2d.min()), np.ceil(Lat2d.max()), 0.5):
-        for lon in np.arange(np.floor(Lon2d.min()), np.ceil(Lon2d.max()), 0.5):
-            # Find the closest grid point to the current lat/lon
-            lat_idx = (np.abs(Lat2d[:, 0] - lat)).argmin()
-            lon_idx = (np.abs(Lon2d[0, :] - lon)).argmin()
-
-            # Only plot if the point is within the NY mask and matches the 0.5-degree grid
-            if ny_mask[lat_idx, lon_idx] and not np.isnan(weasd2d[lat_idx, lon_idx]):
-                ax.text(
-                    Lon2d[lat_idx, lon_idx], Lat2d[lat_idx, lon_idx], f"{weasd2d[lat_idx, lon_idx]:.1f}",
-                    fontsize=5, color="black", ha="center", va="center",
-                    transform=ccrs.PlateCarree(), zorder=10
-                )
-
     # Colorbar
     cbar_ax = fig.add_axes([0.05, 0.08, 0.9, 0.02])  # Adjusted to match plot width
     cbar = plt.colorbar(mesh, cax=cbar_ax, orientation='horizontal')
@@ -265,20 +250,19 @@ def plot_weasd_surface(weasd_path, step):
     cbar.set_ticks(snow_breaks)  # Ensure every tick is shown
     cbar.ax.tick_params(labelsize=6)
 
-
-    # Overlay NY counties and state outline
+    # Overlay all counties and state outlines
     try:
-        ny_gdf.plot(ax=ax, facecolor="none", edgecolor="black", linewidth=0.5, zorder=7)
-        gpd.GeoSeries([ny_state_outline], crs="EPSG:4326").boundary.plot(ax=ax, edgecolor="#000000", linewidth=1.0, zorder=8)
+        region_gdf.plot(ax=ax, facecolor="none", edgecolor="black", linewidth=0.3, zorder=7)
+        region_states_gdf.boundary.plot(ax=ax, edgecolor="#000000", linewidth=1.0, zorder=8)
     except Exception as e:
-        print(f"Error plotting NY overlays: {e}")
+        print(f"Error plotting overlays: {e}")
 
     # Add attribution text at the very bottom right of the map extent, stacked tightly
-    margin_x = (NY_EXTENT[1] - NY_EXTENT[0]) * 0.01
-    margin_y = (NY_EXTENT[3] - NY_EXTENT[2]) * 0.01
-    text_x = NY_EXTENT[1] - margin_x
-    text_y_base = NY_EXTENT[2] + margin_y
-    line_spacing = (NY_EXTENT[3] - NY_EXTENT[2]) * 0.025  # small vertical gap
+    margin_x = (REGION_EXTENT[1] - REGION_EXTENT[0]) * 0.01
+    margin_y = (REGION_EXTENT[3] - REGION_EXTENT[2]) * 0.01
+    text_x = REGION_EXTENT[1] - margin_x
+    text_y_base = REGION_EXTENT[2] + margin_y
+    line_spacing = (REGION_EXTENT[3] - REGION_EXTENT[2]) * 0.025  # small vertical gap
     ax.text(
         text_x, text_y_base + line_spacing, "Images by Jack Fordyce",
         fontsize=7, color="black", ha="right", va="bottom",
@@ -303,7 +287,7 @@ def plot_weasd_surface(weasd_path, step):
     )
 
     # Save PNG
-    png_path = os.path.join(png_dir, f"hrrr_8_to_1_SNOW_NY_{step:02d}.png")
+    png_path = os.path.join(png_dir, f"hrrr_8_to_1_SNOW_EAST_{step:02d}.png")
     plt.savefig(png_path, bbox_inches="tight", dpi=300)
     plt.close(fig)
 
