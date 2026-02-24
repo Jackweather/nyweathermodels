@@ -11,14 +11,14 @@ app = Flask(__name__, static_folder="templates", static_url_path="/static")
 # Directories containing the PNG files
 BASE_DIR = "/var/data"
 PNG_DIRS = {
-    "mslp": os.path.join(BASE_DIR, "mslp_prate_csnow_NY", "png"),
-    "temp": os.path.join(BASE_DIR, "tmp_2m_NY", "png"),
-    "snow_8_to_1": os.path.join(BASE_DIR, "snow_8_to_1_NY", "png"),
-    "snow_10_to_1": os.path.join(BASE_DIR, "SNOW_10to_1_NY", "png"),
-    "precip_type_rate": os.path.join(BASE_DIR, "mslp_prate_csnow_NY", "png"),
-    "wind": os.path.join(BASE_DIR, "wind_10m_NY", "png"),
-    "total_precip": os.path.join(BASE_DIR, "total_precip_NY", "png"),
-    "visibility": os.path.join(BASE_DIR, "vis_NY", "png"),
+    "mslp": os.path.join(BASE_DIR, "mslp_prate_csnow_EAST", "png"),
+    "temp": os.path.join(BASE_DIR, "tmp_2m_EAST", "png"),
+    "snow_8_to_1": os.path.join(BASE_DIR, "snow_8_to_1_EAST", "png"),
+    "snow_10_to_1": os.path.join(BASE_DIR, "SNOW_10to_1_EAST", "png"),
+    "precip_type_rate": os.path.join(BASE_DIR, "mslp_prate_csnow_EAST", "png"),
+    "wind": os.path.join(BASE_DIR, "wind_10m_EAST", "png"),
+    "total_precip": os.path.join(BASE_DIR, "total_precip_EAST", "png"),
+    "visibility": os.path.join(BASE_DIR, "vis_EAST", "png"),
 }
 
 @app.route("/")
