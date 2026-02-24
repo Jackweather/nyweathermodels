@@ -60,13 +60,13 @@ def run_task1():
     def run_scripts_in_parallel():
         print("Flask is running as user:", getpass.getuser())  # Print user for debugging
         scripts = [
-            ("/opt/render/project/src/NY/mslp_prate_csnow_NY.py", "/opt/render/project/src/NY"),
-            ("/opt/render/project/src/NY/tmp_2m_NY.py", "/opt/render/project/src/NY"),
-            ("/opt/render/project/src/NY/Snow_liquid_ratio_8to1.py", "/opt/render/project/src/NY"),
-            ("/opt/render/project/src/NY/Snow_liquid_ratio_10to1.py", "/opt/render/project/src/NY"),
-            ("/opt/render/project/src/NY/wind_10m_NY.py", "/opt/render/project/src/NY"),
-            ("/opt/render/project/src/NY/total_precip_NY.py", "/opt/render/project/src/NY"),
-            ("/opt/render/project/src/NY/vis_NY.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/mslp_prate_csnow_EAST.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/tmp_2m_EAST.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/Snow_liquid_ratio_8to1_EAST.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/Snow_liquid_ratio_10to1_EAST.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/wind_10m_EAST.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/total_precip_EAST.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/vis_EAST.py", "/opt/render/project/src/NY"),
         ]
 
         # Semaphore to limit the number of concurrent processes
