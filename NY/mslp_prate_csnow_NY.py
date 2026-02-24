@@ -19,8 +19,9 @@ from scipy.ndimage import maximum_filter, minimum_filter, label, generate_binary
 import geopandas as gpd
 import shutil
 
-# --- New: utility to fetch NY geojson and compute extent/boundary ---
-def get_ny_geodata(padding_frac=0.09):  # Increased padding_frac from 0.05 to 0.2
+
+# --- Utility to fetch expanded region geojson and compute extent/boundary ---
+def get_eastern_geodata(padding_frac=0.05):
     url = "https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json"
     r = requests.get(url)
     r.raise_for_status()
@@ -33,25 +34,37 @@ def get_ny_geodata(padding_frac=0.09):  # Increased padding_frac from 0.05 to 0.
     gdf = gpd.GeoDataFrame.from_features(geojson["features"])
     gdf = gdf.set_crs("EPSG:4326")
     gdf["fips"] = gdf["fips"].astype(str)
-    ny = gdf[gdf["fips"].str.startswith("36")]
-    if ny.empty:
-        raise RuntimeError("No New York counties found in GeoJSON.")
-    minx, miny, maxx, maxy = ny.total_bounds
+
+    # FIPS state codes for Northeast + Mid-Atlantic + OH/VA
+    region_fips = ["23", "33", "50", "25", "44", "09", "36", "34", "42", "39", "51", "24", "10", "11", "54"]
+    counties = gdf[gdf["fips"].str[:2].isin(region_fips)]
+    if counties.empty:
+        raise RuntimeError("No region counties found in GeoJSON.")
+    minx, miny, maxx, maxy = counties.total_bounds
     pad_x = (maxx - minx) * padding_frac
     pad_y = (maxy - miny) * padding_frac
     extent = [minx - pad_x, maxx + pad_x, miny - pad_y, maxy + pad_y]
-    state_outline = ny.unary_union
-    return ny, extent, state_outline
 
-# Acquire NY geodata once
-ny_gdf, NY_EXTENT, ny_state_outline = get_ny_geodata()
+    state_names = [
+        "Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut",
+        "New York", "New Jersey", "Pennsylvania", "Ohio", "Virginia", "Maryland", "Delaware", "District of Columbia", "West Virginia"
+    ]
+    census_states_url = "https://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_500k.json"
+    states_census_gdf = gpd.read_file(census_states_url)
+    states_census_gdf = states_census_gdf[states_census_gdf["NAME"].isin(state_names)]
+    state_outline = states_census_gdf.unary_union
+    return counties, extent, state_outline, states_census_gdf
+
+# Acquire region geodata once (cache shapes in memory)
+region_gdf, REGION_EXTENT, region_outline, region_states_gdf = get_eastern_geodata()
+
 
 # Set base directory for HRRR output
 BASE_DIR = '/var/data'
 
-# Output directories
-grib_dir = os.path.join(BASE_DIR, "mslp_prate_csnow_NY", "grib")
-png_dir = os.path.join(BASE_DIR, "mslp_prate_csnow_NY", "png")
+# Output directories (use new region folder)
+grib_dir = os.path.join(BASE_DIR, "mslp_prate_csnow_EAST", "grib")
+png_dir = os.path.join(BASE_DIR, "mslp_prate_csnow_EAST", "png")
 os.makedirs(grib_dir, exist_ok=True)
 
 # Remove entire png folder if it exists (ensures it's truly cleared), then recreate it
@@ -64,7 +77,7 @@ if os.path.isdir(png_dir):
 os.makedirs(png_dir, exist_ok=True)
 
 # File to track completed forecast steps for the current run
-processed_steps_file = os.path.join(BASE_DIR, "mslp_prate_csnow_NY", "processed_steps.txt")
+processed_steps_file = os.path.join(BASE_DIR, "mslp_prate_csnow_EAST", "processed_steps.txt")
 
 # Clear the processed steps file at the start of a new run
 if os.path.exists(processed_steps_file):
@@ -244,26 +257,7 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
                 cicep_rate2d = None
             ds_cicep.close()
 
-        # --- Mask all fields to New York polygon so only NY appears ---
-        from matplotlib.path import Path
-        polys = list(ny_state_outline.geoms) if hasattr(ny_state_outline, "geoms") else [ny_state_outline]
-        ny_mask = np.zeros(Lon2d.size, dtype=bool)
-        pts = np.vstack((Lon2d.ravel(), Lat2d.ravel())).T
-        for poly in polys:
-            coords = np.array(poly.exterior.coords)
-            path = Path(coords)  # coords are (lon, lat)
-            ny_mask |= path.contains_points(pts)
-        ny_mask = ny_mask.reshape(Lon2d.shape)
-
-        # apply mask to primary plotted arrays
-        prate2d = np.where(ny_mask, prate2d, np.nan)
-        mslp2d = np.where(ny_mask, mslp2d, np.nan)
-        if snow_rate2d is not None:
-            snow_rate2d = np.where(ny_mask, snow_rate2d, np.nan)
-        if cfrzr_rate2d is not None:
-            cfrzr_rate2d = np.where(ny_mask, cfrzr_rate2d, np.nan)
-        if cicep_rate2d is not None:
-            cicep_rate2d = np.where(ny_mask, cicep_rate2d, np.nan)
+        # Do not mask weather data to region; plot full grid
 
         # --- Title/time calculation --- use timezone-aware conversion so DST is handled
         base_time = datetime.strptime(f"{date_str} {hour_str}", "%Y%m%d %H")
@@ -275,27 +269,19 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
         local_time = local_valid.strftime('%I %p')
         day_of_week = local_valid.strftime('%A')
 
+
         title = (
-            f"HRRR Precipitation Rate & Mean Sea Level Pressure — New York (NY)\n"
+            f"HRRR Precipitation Rate & Mean Sea Level Pressure — Northeast/Mid-Atlantic US\n"
             f"Valid: {valid_time.strftime('%Y-%m-%d %HZ')} ({day_of_week}, {local_time})  "
             f"Run: {hour_str}Z  Forecast Hour: {step}"
         )
 
-        # --- Plotting setup (use adjusted NY extent) ---
-        fig = plt.figure(figsize=(10, 7), dpi=300, facecolor='white')
+        # --- Plotting setup (use expanded region extent) ---
+        fig = plt.figure(figsize=(13, 11), dpi=300, facecolor='white')
         fig.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.16)
         ax = plt.axes(projection=ccrs.PlateCarree(), facecolor='white')
-
-        # Adjust the extent to zoom out slightly
-        zoom_factor = 0.9  # Increased zoom_factor to zoom out slightly
-        extent = [
-            NY_EXTENT[0] + (NY_EXTENT[1] - NY_EXTENT[0]) * (1 - zoom_factor) / 2,
-            NY_EXTENT[1] - (NY_EXTENT[1] - NY_EXTENT[0]) * (1 - zoom_factor) / 2,
-            NY_EXTENT[2] + (NY_EXTENT[3] - NY_EXTENT[2]) * (1 - zoom_factor) / 2,
-            NY_EXTENT[3] - (NY_EXTENT[3] - NY_EXTENT[2]) * (1 - zoom_factor) / 2,
-        ]
-        ax.set_extent(extent, crs=ccrs.PlateCarree())
-        ax.set_title(title, fontsize=10, fontweight='bold', pad=10)
+        ax.set_extent(REGION_EXTENT, crs=ccrs.PlateCarree())
+        ax.set_title(title, fontsize=11, fontweight='bold', pad=10)
 
         # Base map limited to NY: make anything outside appear white
         ax.add_feature(cfeature.LAND, facecolor='white')
@@ -408,7 +394,9 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
         else:
             cax_cicep.set_axis_off()
 
-        # Detect highs and lows limited to NY extent
+
+        # Detect highs and lows limited to region extent
+        extent = REGION_EXTENT
         mask = (
             (Lon2d >= extent[0]) & (Lon2d <= extent[1]) &
             (Lat2d >= extent[2]) & (Lat2d <= extent[3])
@@ -447,38 +435,39 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
             ax.text(high_lon, high_lat - 0.2, f"{high_value:.0f}", color='blue', fontsize=6, fontweight='bold', ha='center', va='top', transform=ccrs.PlateCarree(), zorder=6)
 
 
-        # Overlay NY counties and state outline to ensure PNGs clearly show NY only
-        try:
-            ny_gdf.plot(ax=ax, facecolor="none", edgecolor="black", linewidth=0.5, zorder=7)
-            gpd.GeoSeries([ny_state_outline], crs="EPSG:4326").boundary.plot(ax=ax, edgecolor="#000000", linewidth=1.0, zorder=8)
-        except Exception as e:
-            print(f"Error plotting NY overlays: {e}")
 
-        # Move attribution text further to the right and up from the bottom left
-        margin_x = (NY_EXTENT[1] - NY_EXTENT[0]) * 0.06  # even more right
-        margin_y = (NY_EXTENT[3] - NY_EXTENT[2]) * 0.075  # even more up
-        text_x = NY_EXTENT[0] + margin_x
-        text_y_base = NY_EXTENT[2] + margin_y
-        line_spacing = (NY_EXTENT[3] - NY_EXTENT[2]) * 0.03  # vertical gap
+        # Overlay region counties and state outlines
+        try:
+            region_gdf.plot(ax=ax, facecolor="none", edgecolor="gray", linewidth=0.3, zorder=7)
+            region_states_gdf.boundary.plot(ax=ax, edgecolor="#000000", linewidth=1.0, zorder=8)
+        except Exception as e:
+            print(f"Error plotting overlays: {e}")
+
+
+        margin_x = (REGION_EXTENT[1] - REGION_EXTENT[0]) * 0.01
+        margin_y = (REGION_EXTENT[3] - REGION_EXTENT[2]) * 0.01
+        text_x = REGION_EXTENT[1] - margin_x
+        text_y_base = REGION_EXTENT[2] + margin_y
+        line_spacing = (REGION_EXTENT[3] - REGION_EXTENT[2]) * 0.025
         ax.text(
             text_x, text_y_base + line_spacing, "Images by Jack Fordyce",
-            fontsize=7, color="black", ha="left", va="bottom",
+            fontsize=7, color="black", ha="right", va="bottom",
             fontweight="normal", alpha=0.85,
             transform=ccrs.PlateCarree(),
             zorder=20,
             path_effects=[patheffects.Stroke(linewidth=1, foreground='white'), patheffects.Normal()]
         )
         ax.text(
-            text_x, text_y_base, "NYWeatherModels.com",
-            fontsize=7, color="black", ha="left", va="bottom",
+            text_x, text_y_base, "Truelocalwx.com",
+            fontsize=7, color="black", ha="right", va="bottom",
             fontweight="normal", alpha=0.85,
             transform=ccrs.PlateCarree(),
             zorder=20,
             path_effects=[patheffects.Stroke(linewidth=1, foreground='white'), patheffects.Normal()]
         )
 
-        # Save only NY PNGs
-        png_path = os.path.join(png_dir, f"hrrr_combined_NY_{step:02d}.png")
+        # Save PNG
+        png_path = os.path.join(png_dir, f"hrrr_combined_EAST_{step:02d}.png")
         plt.savefig(png_path, bbox_inches="tight", dpi=300)
         plt.close(fig)
         ds_mslp.close()
