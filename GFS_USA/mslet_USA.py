@@ -340,10 +340,10 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
     # --- Title block ---
     # Map GFS run hour to local base time for f000
     run_hour_map = {
-        "00": 1,   # 00z run: f000 = 1am
-        "06": 7,   # 06z run: f000 = 7am
-        "12": 13,  # 12z run: f000 = 1pm
-        "18": 19   # 18z run: f000 = 7pm
+        "00": 0,   # 00z run: f000 = 12:43 AM
+        "06": 6,   # 06z run: f000 = 6:43 AM
+        "12": 12,  # 12z run: f000 = 12:43 PM
+        "18": 18   # 18z run: f000 = 6:43 PM
     }
     base_hour = run_hour_map.get(hour_str, 7)  # default to 7am if unknown
     base_time = datetime.strptime(date_str + f"{base_hour:02d}", "%Y%m%d%H")
