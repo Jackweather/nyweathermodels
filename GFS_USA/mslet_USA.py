@@ -217,7 +217,7 @@ def get_cicep_grib(step):
     return download_grib(url, file_path)
 
 # Path to the county boundaries JSON file
-COUNTY_JSON_PATH = r"c:\Users\jacfo\Downloads\Weathermodel_aws\cb_2018_us_county_20m.json"
+COUNTY_JSON_PATH = r"counties.json"
 
 # Load county boundaries
 def load_county_boundaries(json_path):
@@ -388,11 +388,11 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
     ax.set_extent(extent, crs=ccrs.PlateCarree())
 
     # Base map
-    ax.add_feature(cfeature.LAND, facecolor='lightgray')
+    ax.add_feature(cfeature.LAND, facecolor='white')
     ax.add_feature(cfeature.OCEAN, facecolor='white')
     ax.add_feature(cfeature.COASTLINE, linewidth=0.7)
     ax.add_feature(cfeature.BORDERS, linewidth=0.5)
-    ax.add_feature(cfeature.STATES, linewidth=0.3)
+    ax.add_feature(cfeature.STATES, linewidth=0.6)
     ax.add_feature(cfeature.RIVERS, linewidth=0.4, edgecolor='blue')
     ax.add_feature(cfeature.LAKES, facecolor='lightblue', edgecolor='blue', linewidth=0.3)
     # --- End custom basemap integration ---
