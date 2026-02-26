@@ -16,6 +16,7 @@ import cartopy
 import importlib
 import shutil
 import json
+from pyproj import Transformer
 
 # Use a file lock so only one process downloads Cartopy data at a time.
 lock = FileLock(os.path.join(os.getcwd(), 'cartopy.lock'))
@@ -55,6 +56,9 @@ temp_norm = BoundaryNorm(temp_levels, custom_cmap.N)
 # Path to the county boundaries JSON file
 COUNTY_JSON_PATH = r"/opt/render/project/src/counties.json"
 
+# Initialize a transformer for EPSG:4269 to EPSG:4326
+transformer = Transformer.from_crs("EPSG:4269", "EPSG:4326", always_xy=True)
+
 # Load county boundaries
 def load_county_boundaries(json_path):
     try:
@@ -91,6 +95,38 @@ def get_tmp_2m_grib(step):
         f"&dir=%2Fgfs.{date_str}%2F{hour_str}%2Fatmos"
     )
     return download_grib(url, file_path)
+
+def transform_coordinates(coords):
+    """Transform coordinates from EPSG:4269 to EPSG:4326."""
+    return [transformer.transform(x, y) for x, y in coords]
+
+def plot_counties(ax, county_boundaries):
+    """Plot county boundaries on the map."""
+    if not county_boundaries:
+        print("No county boundaries to plot.")
+        return
+
+    print("Plotting county boundaries...")
+    for county in county_boundaries['features']:
+        geometry = county['geometry']
+        try:
+            if geometry['type'] == 'Polygon':
+                coords = transform_coordinates(geometry['coordinates'][0])
+                ax.plot(
+                    [c[0] for c in coords],
+                    [c[1] for c in coords],
+                    color='black', linewidth=0.5, transform=ccrs.PlateCarree()
+                )
+            elif geometry['type'] == 'MultiPolygon':
+                for polygon in geometry['coordinates']:
+                    coords = transform_coordinates(polygon[0])
+                    ax.plot(
+                        [c[0] for c in coords],
+                        [c[1] for c in coords],
+                        color='black', linewidth=0.5, transform=ccrs.PlateCarree()
+                    )
+        except Exception as e:
+            print(f"Error plotting county: {e}")
 
 def plot_tmp_2m(grib_path, step):
     ds = xr.open_dataset(grib_path, engine="cfgrib")
@@ -153,6 +189,15 @@ def plot_tmp_2m(grib_path, step):
     cbar.ax.tick_params(labelsize=7, length=2)
     cbar.ax.set_facecolor('white')
     cbar.outline.set_edgecolor('black')
+
+    # Debugging county boundaries
+    if not county_boundaries:
+        print("County boundaries data is empty or invalid.")
+    else:
+        print(f"Loaded {len(county_boundaries['features'])} counties for plotting.")
+
+    # Plot county boundaries
+    plot_counties(ax, county_boundaries)
 
     png_path = os.path.join(png_dir, f"tmp_2m_{step:03d}.png")
     plt.savefig(png_path, bbox_inches='tight', pad_inches=0.3, dpi=600)
