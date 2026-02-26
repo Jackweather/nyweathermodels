@@ -217,7 +217,7 @@ def get_cicep_grib(step):
     return download_grib(url, file_path)
 
 # Path to the county boundaries JSON file
-COUNTY_JSON_PATH = r"counties.json"
+COUNTY_JSON_PATH = r"/opt/render/project/src/counties.json"
 
 # Load county boundaries
 def load_county_boundaries(json_path):
