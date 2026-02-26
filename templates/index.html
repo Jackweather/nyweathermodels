@@ -22,26 +22,30 @@
 </head>
 <body>
   <div class="top-left">
-    <div class="dropdown" id="fs-dropdown">
-      <button id="fs-vars-button">Variables</button>
-      <div class="dropdown-content" id="fs-vars-list">
-        <div class="dropdown" id="hrrr-dropdown" style="width:100%">
-          <button id="hrrr-vars-button" style="width:100%;text-align:left">HRRR</button>
-          <div class="dropdown-content" id="hrrr-vars-list" style="position:static;box-shadow:none;min-width:unset">
-            <button data-view="mslp">MSLP</button>
-            <button data-view="temp">2m-Temp</button>
-            <button data-view="snow_8_to_1">Snow 8-to-1</button>
-            <button data-view="snow_10_to_1">Snow 10-to-1</button>
-            <button data-view="precip_type_rate">Precip Type Rate</button>
-            <button data-view="wind">10m-Wind</button>
-            <button data-view="total_precip">Total Precip</button>
-            <button data-view="visibility">Visibility</button>
-          </div>
+    <div style="display: flex; align-items: center;">
+      <div class="dropdown" id="hrrr-dropdown">
+        <button id="hrrr-vars-button" style="padding: 8px 12px; border-radius: 6px; border: none; background: #fff; color: #000; cursor: pointer;">HRRR</button>
+        <div class="dropdown-content" id="hrrr-vars-list" style="position:absolute; top:100%; left:0; box-shadow:none; min-width:unset">
+          <button data-view="mslp">MSLP</button>
+          <button data-view="temp">2m-Temp</button>
+          <button data-view="snow_8_to_1">Snow 8-to-1</button>
+          <button data-view="snow_10_to_1">Snow 10-to-1</button>
+          <button data-view="precip_type_rate">Precip Type Rate</button>
+          <button data-view="wind">10m-Wind</button>
+          <button data-view="total_precip">Total Precip</button>
+          <button data-view="visibility">Visibility</button>
         </div>
-        <button data-view="gfs">GFS</button>
+      </div>
+      <div class="dropdown" id="gfs-dropdown">
+        <button id="gfs-vars-button" style="margin-left: 12px; padding: 8px 12px; border-radius: 6px; border: none; background: #fff; color: #000; cursor: pointer;">GFS</button>
+        <div class="dropdown-content" id="gfs-vars-list">
+          <button data-view="gfs_precip">Precip Type</button>
+          <button data-view="gfs_tmp">Tmp 2m</button>
+        </div>
       </div>
     </div>
   </div>
+  <button id="gfs-button" style="margin-left: 12px; padding: 8px 12px; border-radius: 6px; border: none; background: #fff; color: #000; cursor: pointer;">GFS</button>
   <div class="top-right"><button class="close-btn" onclick="window.close()">Close</button></div>
   <div class="top-label">NY-Weather-Models.com</div>
   <div class="img-wrap">
@@ -55,9 +59,12 @@
     (function(){
       const img = document.getElementById('fswin-img');
       const slider = document.getElementById('fswin-slider');
-      const fsDropdown = document.getElementById('fs-dropdown');
-      const fsVarsButton = document.getElementById('fs-vars-button');
-      const fsVarsList = document.getElementById('fs-vars-list');
+      const hrrrDropdown = document.getElementById('hrrr-dropdown');
+      const hrrrVarsButton = document.getElementById('hrrr-vars-button');
+      const hrrrVarsList = document.getElementById('hrrr-vars-list');
+      const gfsDropdown = document.getElementById('gfs-dropdown');
+      const gfsVarsButton = document.getElementById('gfs-vars-button');
+      const gfsVarsList = document.getElementById('gfs-vars-list');
 
       let files = [];
       let idx = 0;
@@ -67,22 +74,10 @@
       let rafScheduled = false;
       let pendingIdx = null;
 
-      // Try to load files from localStorage (set by opener)
-      try{
-        const stored = localStorage.getItem('fsFullscreenPngs');
-        if (stored){ files = JSON.parse(stored); }
-        const sidx = localStorage.getItem('fsStartIndex');
-        if (sidx) idx = Number(sidx) || 0;
-        // cleanup stored keys so they don't persist unnecessarily
-        localStorage.removeItem('fsFullscreenPngs');
-        localStorage.removeItem('fsStartIndex');
-      }catch(e){ files = []; idx = 0 }
-
       function update(){
         if (files.length > 0){
           idx = Math.max(0, Math.min(files.length-1, idx));
           const file = files[idx];
-          // prefer using the preloaded Image object's src so we reuse in-memory data
           if (preloadMap[file] && preloadMap[file].src){
             img.src = preloadMap[file].src;
           } else {
@@ -99,7 +94,6 @@
         }
       }
 
-      // Throttle rapid slider input events with requestAnimationFrame and use preloaded images
       slider.addEventListener('input', ()=>{
         if (isLoading) return;
         pendingIdx = Number(slider.value);
@@ -119,51 +113,28 @@
         if (e.key === 'Escape') window.close();
       });
 
-      // Dropdown toggle
-      fsVarsButton.addEventListener('click', (ev)=>{ ev.stopPropagation(); fsDropdown.classList.toggle('active'); });
-      document.addEventListener('click', ()=> fsDropdown.classList.remove('active'));
-
-      // Helper to preload image URLs, resolves when all attempted
-      function preloadImages(urls){
-        // clear previous preload map and set a session token so displayed src matches preloaded src
-        preloadMap = {};
-        preloadToken = Date.now();
-        const token = preloadToken;
-        return Promise.all(urls.map(u=>new Promise((resolve)=>{
-          const im = new Image();
-          im.onload = () => { preloadMap[u] = im; resolve({url:u,ok:true}); };
-          im.onerror = () => { preloadMap[u] = im; resolve({url:u,ok:false}); };
-          im.src = u + '?t=' + token;
-        })));
-      }
-
-      // Wire variable buttons to fetch png list for fullscreen only
-      // Handle HRRR submenu dropdown
-      const hrrrDropdown = document.getElementById('hrrr-dropdown');
-      const hrrrVarsButton = document.getElementById('hrrr-vars-button');
-      const hrrrVarsList = document.getElementById('hrrr-vars-list');
-
-      // Show HRRR submenu as a dropdown below HRRR button on click
       hrrrVarsButton.addEventListener('click', function(ev) {
         ev.stopPropagation();
-        const hrrrList = document.getElementById('hrrr-vars-list');
-        hrrrList.style.display = (hrrrList.style.display === 'flex') ? 'none' : 'flex';
+        hrrrVarsList.style.display = (hrrrVarsList.style.display === 'flex') ? 'none' : 'flex';
       });
 
-      // Close HRRR submenu when clicking outside
       document.addEventListener('click', function(ev) {
-        if (!fsDropdown.contains(ev.target)) {
-          fsDropdown.classList.remove('active');
-          document.getElementById('hrrr-vars-list').style.display = 'none';
+        if (!hrrrDropdown.contains(ev.target)) {
+          hrrrVarsList.style.display = 'none';
         }
       });
 
-      // Always hide HRRR submenu when main dropdown closes
-      fsVarsButton.addEventListener('click', function(ev) {
-        document.getElementById('hrrr-vars-list').style.display = 'none';
+      gfsVarsButton.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        gfsVarsList.style.display = (gfsVarsList.style.display === 'flex') ? 'none' : 'flex';
       });
 
-      // Wire up HRRR variable buttons
+      document.addEventListener('click', function(ev) {
+        if (!gfsDropdown.contains(ev.target)) {
+          gfsVarsList.style.display = 'none';
+        }
+      });
+
       hrrrVarsList.querySelectorAll('button').forEach(b=>{
         b.addEventListener('click', async (ev)=>{
           ev.stopPropagation();
@@ -182,32 +153,30 @@
           }catch(err){ console.error('Failed to fetch HRRR list', err); }
           isLoading = false;
           update();
-          fsDropdown.classList.remove('active');
-          hrrrDropdown.classList.remove('active');
         });
       });
 
-      // Wire up GFS button
-      fsVarsList.querySelector('button[data-view="gfs"]').addEventListener('click', async (ev)=>{
-        ev.stopPropagation();
-        isLoading = true;
-        slider.disabled = true;
-        try{
-          const resp = await fetch('/list_pngs/gfs');
-          let list = [];
-          if(resp.ok){
-            list = await resp.json() || [];
-          }
-          try{ await preloadImages(list); }catch(_){ }
-          files = list;
-          idx = 0;
-        }catch(err){ console.error('Failed to fetch GFS list', err); }
-        isLoading = false;
-        update();
-        fsDropdown.classList.remove('active');
+      gfsVarsList.querySelectorAll('button').forEach(b=>{
+        b.addEventListener('click', async (ev)=>{
+          ev.stopPropagation();
+          const view = b.getAttribute('data-view');
+          isLoading = true;
+          slider.disabled = true;
+          try{
+            const resp = await fetch(`/list_pngs/${view}`);
+            let list = [];
+            if (resp.ok){
+              list = await resp.json() || [];
+            }
+            try{ await preloadImages(list); }catch(_){ }
+            files = list;
+            idx = 0;
+          }catch(err){ console.error('Failed to fetch GFS list', err); }
+          isLoading = false;
+          update();
+        });
       });
 
-      // If no files were provided via opener/localStorage, load precip type by default
       (async function loadDefaultIfEmpty(){
         if (!files || files.length === 0){
           isLoading = true;
@@ -223,7 +192,6 @@
           }catch(err){ console.error('Failed to fetch default precip list', err); }
           isLoading = false;
         }
-        // initialize display regardless
         update();
       })();
     })();
