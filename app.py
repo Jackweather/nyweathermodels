@@ -20,6 +20,7 @@ PNG_DIRS = {
     "visibility": os.path.join(BASE_DIR, "vis_EAST", "png"),
     "gfs_precip": os.path.join(BASE_DIR, "GSF_mslp_prate_csnow", "png"),
     "gfs_tmp": os.path.join(BASE_DIR, "GFS_tmp_2m", "png"),
+    "850_vort": os.path.join(BASE_DIR, "GFS_absv_850mb", "png"),
 }
 
 @app.route("/get_gfs_png/<filename>")
@@ -129,8 +130,10 @@ def run_task2():
     def run_scripts_in_parallel():
         print("Flask is running as user:", getpass.getuser())  # Print user for debugging
         scripts = [
-            ("/opt/render/project/src/GFS_USA/mslet_USA.py", "/opt/render/project/src/GFS_USA"),
+            ("/opt/render/project/src/GFS_USA/Prate_USA.py", "/opt/render/project/src/GFS_USA"),
             ("/opt/render/project/src/GFS_USA/tmp_2m_USA.py", "/opt/render/project/src/GFS_USA"),
+            ("/opt/render/project/src/GFS_USA/absv_850mb_plot.py", "/opt/render/project/src/GFS_USA"),
+                
             # Add more GFS scripts here as needed
         ]
 
