@@ -32,7 +32,7 @@ png_dir = os.path.join(BASE_DIR, "GFS_tmp_2m", "png")
 os.makedirs(grib_dir, exist_ok=True)
 os.makedirs(png_dir, exist_ok=True)
 
-forecast_steps = [0] + list(range(6, 385, 6))
+forecast_steps = list(range(6, 385, 6))
 
 # Define levels and colormap for temperature in Fahrenheit
 temp_levels = [-20, 0, 10, 20, 32, 40, 50, 60, 70, 80, 90, 100]  # For colorbar use later, in Fahrenheit
@@ -73,6 +73,48 @@ def load_county_boundaries(json_path):
 # Load the county boundaries at the start
 county_boundaries = load_county_boundaries(COUNTY_JSON_PATH)
 
+# Cache for transformed county coordinates
+cached_county_coords = {}
+
+def transform_and_cache_county(county_id, coords):
+    """Transform and cache county coordinates."""
+    if county_id not in cached_county_coords:
+        cached_county_coords[county_id] = transform_coordinates(coords)
+    return cached_county_coords[county_id]
+
+def transform_coordinates(coords):
+    """Transform coordinates from EPSG:4269 to EPSG:4326."""
+    return [transformer.transform(x, y) for x, y in coords]
+
+def plot_counties(ax, county_boundaries):
+    """Plot county boundaries on the map."""
+    if not county_boundaries:
+        print("No county boundaries to plot.")
+        return
+
+    print("Plotting county boundaries...")
+    for county in county_boundaries['features']:
+        geometry = county['geometry']
+        county_id = county['properties'].get('GEOID', 'unknown')
+        try:
+            if geometry['type'] == 'Polygon':
+                coords = transform_and_cache_county(county_id, geometry['coordinates'][0])
+                ax.plot(
+                    [c[0] for c in coords],
+                    [c[1] for c in coords],
+                    color='black', linewidth=0.5, transform=ccrs.PlateCarree()
+                )
+            elif geometry['type'] == 'MultiPolygon':
+                for i, polygon in enumerate(geometry['coordinates']):
+                    coords = transform_and_cache_county(f"{county_id}_{i}", polygon[0])
+                    ax.plot(
+                        [c[0] for c in coords],
+                        [c[1] for c in coords],
+                        color='black', linewidth=0.5, transform=ccrs.PlateCarree()
+                    )
+        except Exception as e:
+            print(f"Error plotting county {county_id}: {e}")
+
 def download_grib(url, file_path):
     response = requests.get(url, stream=True)
     if response.status_code == 200:
@@ -95,38 +137,6 @@ def get_tmp_2m_grib(step):
         f"&dir=%2Fgfs.{date_str}%2F{hour_str}%2Fatmos"
     )
     return download_grib(url, file_path)
-
-def transform_coordinates(coords):
-    """Transform coordinates from EPSG:4269 to EPSG:4326."""
-    return [transformer.transform(x, y) for x, y in coords]
-
-def plot_counties(ax, county_boundaries):
-    """Plot county boundaries on the map."""
-    if not county_boundaries:
-        print("No county boundaries to plot.")
-        return
-
-    print("Plotting county boundaries...")
-    for county in county_boundaries['features']:
-        geometry = county['geometry']
-        try:
-            if geometry['type'] == 'Polygon':
-                coords = transform_coordinates(geometry['coordinates'][0])
-                ax.plot(
-                    [c[0] for c in coords],
-                    [c[1] for c in coords],
-                    color='black', linewidth=0.5, transform=ccrs.PlateCarree()
-                )
-            elif geometry['type'] == 'MultiPolygon':
-                for polygon in geometry['coordinates']:
-                    coords = transform_coordinates(polygon[0])
-                    ax.plot(
-                        [c[0] for c in coords],
-                        [c[1] for c in coords],
-                        color='black', linewidth=0.5, transform=ccrs.PlateCarree()
-                    )
-        except Exception as e:
-            print(f"Error plotting county: {e}")
 
 def plot_tmp_2m(grib_path, step):
     ds = xr.open_dataset(grib_path, engine="cfgrib")
