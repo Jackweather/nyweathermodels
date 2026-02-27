@@ -18,6 +18,24 @@
     .dropdown.active .dropdown-content{display:flex}
     .dropdown .dropdown-content button{background:none;border:none;padding:8px 12px;text-align:left;cursor:pointer}
     .close-btn{padding:8px 12px;border-radius:6px;border:none;background:#fff;color:#000;cursor:pointer}
+    .loading-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #3498db;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -53,6 +71,8 @@
   <div class="controls">
     <input id="fswin-slider" type="range" min="0" max="0" value="0" step="1" style="width:80%">
   </div>
+
+  <div class="loading-spinner" id="loading-spinner"></div>
 
   <script>
     (function(){
@@ -146,7 +166,7 @@
             if (resp.ok){
               list = await resp.json() || [];
             }
-            try{ await preloadImages(list); }catch(_){ }
+            await preloadImages(list); // Preload all images before showing
             files = list;
             idx = 0;
           }catch(err){ console.error('Failed to fetch HRRR list', err); }
@@ -167,7 +187,7 @@
             if (resp.ok){
               list = await resp.json() || [];
             }
-            try{ await preloadImages(list); }catch(_){ }
+            await preloadImages(list); // Preload all images before showing
             files = list;
             idx = 0;
           }catch(err){ console.error('Failed to fetch GFS list', err); }
@@ -175,6 +195,25 @@
           update();
         });
       });
+
+      async function preloadImages(imageUrls) {
+        const spinner = document.getElementById('loading-spinner');
+        spinner.style.display = 'block'; // Show loading spinner
+
+        const promises = imageUrls.map(url => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = url;
+                preloadMap[url] = img; // Cache the preloaded image
+            });
+        });
+
+        await Promise.all(promises);
+        spinner.style.display = 'none'; // Hide loading spinner
+        console.log("Preloading complete.");
+      }
 
       (async function loadDefaultIfEmpty(){
         if (!files || files.length === 0){
