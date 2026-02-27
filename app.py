@@ -20,6 +20,7 @@ PNG_DIRS = {
     "visibility": os.path.join(BASE_DIR, "vis_EAST", "png"),
     "gfs_precip": os.path.join(BASE_DIR, "GSF_mslp_prate_csnow", "png"),
     "gfs_tmp": os.path.join(BASE_DIR, "GFS_tmp_2m", "png"),
+    "gfs_wind_300mb": os.path.join(BASE_DIR, "GFS_wind_300mb", "png"),
     "850_vort": os.path.join(BASE_DIR, "GFS_absv_850mb", "png"),
 }
 
@@ -30,6 +31,8 @@ def get_gfs_png(filename):
     if not gfs_dir:
         return jsonify({"error": "GFS directory not found"}), 404
     return send_from_directory(gfs_dir, filename)
+
+
 
 @app.route("/")
 def index():
@@ -133,6 +136,7 @@ def run_task2():
             ("/opt/render/project/src/GFS_USA/Prate_USA.py", "/opt/render/project/src/GFS_USA"),
             ("/opt/render/project/src/GFS_USA/tmp_2m_USA.py", "/opt/render/project/src/GFS_USA"),
             ("/opt/render/project/src/GFS_USA/absv_850mb_plot.py", "/opt/render/project/src/GFS_USA"),
+            ("/opt/render/project/src/GFS_USA/wind_300mb_plot.py", "/opt/render/project/src/GFS_USA"),
                 
             # Add more GFS scripts here as needed
         ]
