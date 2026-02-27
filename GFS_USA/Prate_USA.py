@@ -129,7 +129,7 @@ cicep_cmap = LinearSegmentedColormap.from_list("cicep_cbar", cicep_colors, N=len
 cicep_norm = BoundaryNorm(cicep_levels, cicep_cmap.N)
 
 # Forecast steps
-forecast_steps = [0] + list(range(6, 385, 6))
+forecast_steps = list(range(6, 385, 6))
 
 
 # Download functions
@@ -352,10 +352,11 @@ def plot_combined(mslp_path, prate_path, step, csnow_path=None, cfrzr_path=None,
     day_of_week = valid_time.strftime('%A')  # Get the day of the week
     # Show local run time as the mapped local hour (e.g., 12z = 1pm, 18z = 7pm, etc)
     local_hour = run_hour_map.get(hour_str, 7)
-    local_run_time = datetime.strptime(f"{date_str} {local_hour:02d}", "%Y%m%d %H").strftime('%I%p').lstrip('0').lower()
+    local_run_time = datetime.strptime(f"{date_str} {local_hour:02d}", "%Y%m%d %H") + timedelta(hours=1)
+    local_run_time = local_run_time.strftime('%I%p').lstrip('0').lower()
     title = (
         f"GFS Model {valid_time.strftime('%y%m%d')} {local_run_time} {day_of_week} "
-        f"Forecast Hour: {step} Run: {hour_str}z\nPrecipitation Rate & Mean Sea Level Pressure"
+        f"Forecast Hour: {step} Run: {hour_str}z\nPrecipitation Rate (mm/hr)"
     )
     # Add title above plot
     plt.title(title, fontsize=12, fontweight='bold', y=1.03)
