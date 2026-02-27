@@ -172,6 +172,7 @@
           }catch(err){ console.error('Failed to fetch HRRR list', err); }
           isLoading = false;
           update();
+          hrrrVarsList.style.display = 'none'; // Close the dropdown
         });
       });
 
@@ -193,6 +194,7 @@
           }catch(err){ console.error('Failed to fetch GFS list', err); }
           isLoading = false;
           update();
+          gfsVarsList.style.display = 'none'; // Close the dropdown
         });
       });
 
