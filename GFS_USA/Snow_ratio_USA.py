@@ -28,7 +28,7 @@ png_dir = os.path.join(BASE_DIR, "GFS_dzdt_700mb", "png")
 os.makedirs(grib_dir, exist_ok=True)
 os.makedirs(png_dir, exist_ok=True)
 
-forecast_steps = list(range(0, 385, 6))
+forecast_steps = list(range(6, 385, 6))
 
 # Define levels and colormap for temperature at 700 mb
 tmp_levels = np.linspace(-50, 50, 21)  # Temperature levels in °C
