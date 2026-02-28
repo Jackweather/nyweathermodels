@@ -21,7 +21,8 @@ PNG_DIRS = {
     "gfs_precip": os.path.join(BASE_DIR, "GSF_mslp_prate_csnow", "png"),
     "gfs_tmp": os.path.join(BASE_DIR, "GFS_tmp_2m", "png"),
     "gfs_wind_300mb": os.path.join(BASE_DIR, "GFS_wind_300mb", "png"),
-    "850_vort": os.path.join(BASE_DIR, "GFS_absv_850mb", "png"),
+    "gfs_frzr": os.path.join(BASE_DIR, "GFS_frzr_surface", "png"),
+    
 }
 
 @app.route("/get_gfs_png/<filename>")
@@ -135,8 +136,8 @@ def run_task2():
         scripts = [
             ("/opt/render/project/src/GFS_USA/Prate_USA.py", "/opt/render/project/src/GFS_USA"),
             ("/opt/render/project/src/GFS_USA/tmp_2m_USA.py", "/opt/render/project/src/GFS_USA"),
-            ("/opt/render/project/src/GFS_USA/absv_850mb_plot.py", "/opt/render/project/src/GFS_USA"),
             ("/opt/render/project/src/GFS_USA/wind_300mb_plot.py", "/opt/render/project/src/GFS_USA"),
+            ("/opt/render/project/src/GFS_USA/frzr_surface_plot.py", "/opt/render/project/src/GFS_USA"),
                 
             # Add more GFS scripts here as needed
         ]
