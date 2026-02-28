@@ -587,7 +587,11 @@ for step in forecast_steps:
         '850mb': get_tmp_and_dzdt_850mb_grib(step),
     }
     if all(grib_paths.values()):
-        plot_snow_ratio(grib_paths, step)
+        try:
+            plot_snow_ratio(grib_paths, step)
+        except Exception as e:
+            print(f"Error occurred while processing: {e}")
+            print("Skipping to the next PNG...")
         gc.collect()
         time.sleep(1)
 
