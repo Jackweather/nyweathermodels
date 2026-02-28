@@ -22,6 +22,7 @@ PNG_DIRS = {
     "gfs_tmp": os.path.join(BASE_DIR, "GFS_tmp_2m", "png"),
     "gfs_wind_300mb": os.path.join(BASE_DIR, "GFS_wind_300mb", "png"),
     "gfs_frzr": os.path.join(BASE_DIR, "GFS_frzr_surface", "png"),
+    "gfs_snow_ratio": os.path.join(BASE_DIR, "GFS_dzdt_700mb", "png")
     
 }
 
@@ -138,6 +139,7 @@ def run_task2():
             ("/opt/render/project/src/GFS_USA/tmp_2m_USA.py", "/opt/render/project/src/GFS_USA"),
             ("/opt/render/project/src/GFS_USA/wind_300mb_plot.py", "/opt/render/project/src/GFS_USA"),
             ("/opt/render/project/src/GFS_USA/frzr_surface_plot.py", "/opt/render/project/src/GFS_USA"),
+            ("/opt/render/project/src/GFS_USA/Snow_ratio_USA.py", "/opt/render/project/src/GFS_USA"),
                 
             # Add more GFS scripts here as needed
         ]
