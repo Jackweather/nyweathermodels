@@ -18,11 +18,7 @@ PNG_DIRS = {
     "wind": os.path.join(BASE_DIR, "wind_10m_EAST", "png"),
     "total_precip": os.path.join(BASE_DIR, "total_precip_EAST", "png"),
     "visibility": os.path.join(BASE_DIR, "vis_EAST", "png"),
-    "gfs_precip": os.path.join(BASE_DIR, "GSF_mslp_prate_csnow", "png"),
-    "gfs_tmp": os.path.join(BASE_DIR, "GFS_tmp_2m", "png"),
-    "gfs_wind_300mb": os.path.join(BASE_DIR, "GFS_wind_300mb", "png"),
-    "gfs_frzr": os.path.join(BASE_DIR, "GFS_frzr_surface", "png"),
-    "gfs_snow_ratio": os.path.join(BASE_DIR, "GFS_dzdt_700mb", "png")
+    
     
 }
 
@@ -136,10 +132,7 @@ def run_task2():
         print("Flask is running as user:", getpass.getuser())  # Print user for debugging
         scripts = [
             ("/opt/render/project/src/GFS_USA/Prate_USA.py", "/opt/render/project/src/GFS_USA"),
-            ("/opt/render/project/src/GFS_USA/tmp_2m_USA.py", "/opt/render/project/src/GFS_USA"),
-            ("/opt/render/project/src/GFS_USA/wind_300mb_plot.py", "/opt/render/project/src/GFS_USA"),
-            ("/opt/render/project/src/GFS_USA/frzr_surface_plot.py", "/opt/render/project/src/GFS_USA"),
-            ("/opt/render/project/src/GFS_USA/Snow_ratio_USA.py", "/opt/render/project/src/GFS_USA"),
+            
                 
             # Add more GFS scripts here as needed
         ]
