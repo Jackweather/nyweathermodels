@@ -18,6 +18,8 @@ PNG_DIRS = {
     "wind": os.path.join(BASE_DIR, "wind_10m_EAST", "png"),
     "total_precip": os.path.join(BASE_DIR, "total_precip_EAST", "png"),
     "visibility": os.path.join(BASE_DIR, "vis_EAST", "png"),
+    "SNOW_Depth": os.path.join(BASE_DIR, "SNOD_EAST", "png"),
+    
     
     
 }
@@ -83,6 +85,7 @@ def run_task1():
             ("/opt/render/project/src/NY/wind_10m_EAST.py", "/opt/render/project/src/NY"),
             ("/opt/render/project/src/NY/total_precip_EAST.py", "/opt/render/project/src/NY"),
             ("/opt/render/project/src/NY/vis_EAST.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/SNOD_EAST.py", "/opt/render/project/src/NY"),
         ]
 
         # Semaphore to limit the number of concurrent processes
