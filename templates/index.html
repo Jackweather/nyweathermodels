@@ -54,16 +54,6 @@
           <button data-view="visibility">Visibility</button>
         </div>
       </div>
-      <div class="dropdown" id="gfs-dropdown">
-        <button id="gfs-vars-button" style="margin-left: 12px; padding: 8px 12px; border-radius: 6px; border: none; background: #fff; color: #000; cursor: pointer;">GFS</button>
-        <div class="dropdown-content" id="gfs-vars-list">
-          <button data-view="gfs_precip">Precip Type</button>
-          <button data-view="gfs_tmp">Tmp 2m</button>
-          <button data-view="gfs_wind_300mb">300mb Wind</button>
-          <button data-view="gfs_frzr">Frzr Surface</button>
-          <button data-view="gfs_snow_ratio">Snow 700mb Dz/Dt</button>
-        </div>
-      </div>
     </div>
   </div>
   <div class="top-right"><button class="close-btn" onclick="window.close()">Close</button></div>
@@ -84,9 +74,6 @@
       const hrrrDropdown = document.getElementById('hrrr-dropdown');
       const hrrrVarsButton = document.getElementById('hrrr-vars-button');
       const hrrrVarsList = document.getElementById('hrrr-vars-list');
-      const gfsDropdown = document.getElementById('gfs-dropdown');
-      const gfsVarsButton = document.getElementById('gfs-vars-button');
-      const gfsVarsList = document.getElementById('gfs-vars-list');
 
       let files = [];
       let idx = 0;
@@ -146,17 +133,6 @@
         }
       });
 
-      gfsVarsButton.addEventListener('click', (ev)=>{
-        ev.stopPropagation();
-        gfsVarsList.style.display = (gfsVarsList.style.display === 'flex') ? 'none' : 'flex';
-      });
-
-      document.addEventListener('click', function(ev) {
-        if (!gfsDropdown.contains(ev.target)) {
-          gfsVarsList.style.display = 'none';
-        }
-      });
-
       hrrrVarsList.querySelectorAll('button').forEach(b=>{
         b.addEventListener('click', async (ev)=>{
           ev.stopPropagation();
@@ -176,28 +152,6 @@
           isLoading = false;
           update();
           hrrrVarsList.style.display = 'none'; // Close the dropdown
-        });
-      });
-
-      gfsVarsList.querySelectorAll('button').forEach(b=>{
-        b.addEventListener('click', async (ev)=>{
-          ev.stopPropagation();
-          const view = b.getAttribute('data-view');
-          isLoading = true;
-          slider.disabled = true;
-          try{
-            const resp = await fetch(`/list_pngs/${view}`);
-            let list = [];
-            if (resp.ok){
-              list = await resp.json() || [];
-            }
-            await preloadImages(list); // Preload all images before showing
-            files = list;
-            idx = 0;
-          }catch(err){ console.error('Failed to fetch GFS list', err); }
-          isLoading = false;
-          update();
-          gfsVarsList.style.display = 'none'; // Close the dropdown
         });
       });
 
