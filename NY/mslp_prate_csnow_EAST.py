@@ -92,20 +92,51 @@ variable_cfrzr = "CFRZR"  # Freezing Rain Rate
 variable_cicep = "CICEP"  # Sleet Rate
 
 # Adjust available hours to include 03Z, 09Z, 15Z, 21Z with a max forecast range of 18 hours
-available_hours = [0, 3, 6, 9, 12, 15, 18, 21]
-max_forecast_hours = {3, 9, 15, 21}  # These runs only go out to 18 hours
+available_hours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+max_forecast_hours = {1, 2, 3, 4, 5,7,8, 9, 10, 11, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23}  # These runs only go out to 18 hours
+
+# Function to validate if a run time is accessible
+def is_valid_run(run_time):
+    """Check if HRRR data for the given run time is accessible."""
+    test_date_str = run_time.strftime("%Y%m%d")
+    test_hour_str = run_time.strftime("%H")
+    test_file_name = f"hrrr.t{test_hour_str}z.wrfsfcf01.grib2"
+    test_url = (
+        f"{base_url_hrrr}?file={test_file_name}"
+        f"&lev_surface=on&lev_mean_sea_level=on"
+        f"&var_MSLMA=on"
+        f"&dir=%2Fhrrr.{test_date_str}%2Fconus"
+    )
+    try:
+        response = requests.head(test_url, timeout=5)
+        return response.status_code == 200
+    except Exception:
+        return False
 
 # Function to get the forecast steps based on the run hour
 def get_forecast_steps(run_hour):
-    if run_hour in {3, 9, 15, 21}:  # Limit to 18-hour forecast for 03Z, 09Z, 15Z, 21Z
+    if run_hour in {3, 9, 13, 14, 15, 16, 21}:  # Limit to 18-hour forecast for 03Z, 09Z, 13Z, 14Z, 15Z, 16Z, 21Z
         return list(range(1, 19))  # 18-hour forecast
-    return list(range(1, 49, 3))  # Default 48-hour forecast in 3-hour steps
+    return list(range(1, 49, 1))  # Default 48-hour forecast in 3-hour steps
 
 # Calculate the most recent HRRR run dynamically
 current_utc_time = datetime.utcnow()
-most_recent_run_hour = max(h for h in available_hours if h <= current_utc_time.hour)
-most_recent_run_time = current_utc_time.replace(hour=most_recent_run_hour, minute=0, second=0, microsecond=0)
-forecast_steps = get_forecast_steps(most_recent_run_hour)
+most_recent_run_time = None
+
+# Iterate backward to find the most recent valid run, checking all available hours
+for offset in range(24):  # Check up to 24 hours back
+    candidate_hour = (current_utc_time.hour - offset) % 24
+    if candidate_hour in available_hours:
+        candidate_time = current_utc_time.replace(hour=candidate_hour, minute=0, second=0, microsecond=0)
+        # Check if the run is valid (e.g., file exists or accessible)
+        if is_valid_run(candidate_time):  # Replace with actual validation logic
+            most_recent_run_time = candidate_time
+            break
+
+if most_recent_run_time is None:
+    raise ValueError("No valid run time found in the available hours.")
+
+forecast_steps = get_forecast_steps(most_recent_run_time.hour)
 
 # Define previous_run_time as the most recent run time minus the forecast interval
 previous_run_time = most_recent_run_time - timedelta(hours=6)
