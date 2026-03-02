@@ -85,7 +85,7 @@ def run_task1():
             ("/opt/render/project/src/NY/wind_10m_EAST.py", "/opt/render/project/src/NY"),
             ("/opt/render/project/src/NY/total_precip_EAST.py", "/opt/render/project/src/NY"),
             ("/opt/render/project/src/NY/vis_EAST.py", "/opt/render/project/src/NY"),
-            ("/opt/render/project/src/NY/SNOD_EAST.py", "/opt/render/project/src/NY"),
+            ("/opt/render/project/src/NY/Snow_liquid_ratio_SNOD_EAST.py", "/opt/render/project/src/NY"),
         ]
 
         # Semaphore to limit the number of concurrent processes
