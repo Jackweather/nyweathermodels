@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dated HRRR PNGs</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f8f8; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 40px auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        h1 { text-align: center; }
+        .png-list { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+        .png-item { background: #f0f0f0; border-radius: 6px; padding: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+        .png-item img { max-width: 300px; max-height: 200px; display: block; margin: 0 auto 8px; border-radius: 4px; }
+        .filename { font-size: 0.95em; color: #333; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Dated HRRR PNGs</h1>
+    <div style="text-align:center; margin-bottom: 24px;">
+        <label for="yymmdd-select">Date:</label>
+        <select id="yymmdd-select"></select>
+        <label for="runhour-select" style="margin-left:12px;">Run Hour:</label>
+        <select id="runhour-select"></select>
+        <div style="margin-top:8px;">
+            <span id="auto-label" style="font-size:1.1em; color:#555;"></span>
+        </div>
+    </div>
+    <div id="pngs" class="png-list"></div>
+</div>
+<script>
+
+const pngsDiv = document.getElementById('pngs');
+const autoLabel = document.getElementById('auto-label');
+const yymmddSelect = document.getElementById('yymmdd-select');
+const runhourSelect = document.getElementById('runhour-select');
+
+// Fetch all available yymmdd directories
+function fetchDates() {
+    fetch('/get_all_dated_dirs')
+        .then(resp => resp.json())
+        .then(dates => {
+            if (!Array.isArray(dates) || dates.length === 0) {
+                autoLabel.textContent = 'No dates available.';
+                return;
+            }
+            yymmddSelect.innerHTML = '';
+            dates.sort().reverse().forEach(date => {
+                const opt = document.createElement('option');
+                opt.value = date;
+                opt.textContent = date;
+                yymmddSelect.appendChild(opt);
+            });
+            fetchRunHours(yymmddSelect.value);
+        })
+        .catch(() => {
+            autoLabel.textContent = 'Error fetching dates.';
+        });
+}
+
+// Fetch all available run hours for a given yymmdd
+function fetchRunHours(yymmdd) {
+    fetch(`/get_run_hours/${yymmdd}`)
+        .then(resp => resp.json())
+        .then(hours => {
+            runhourSelect.innerHTML = '';
+            if (!Array.isArray(hours) || hours.length === 0) {
+                autoLabel.textContent = 'No run hours for this date.';
+                pngsDiv.innerHTML = '';
+                return;
+            }
+            hours.sort().reverse().forEach(hour => {
+                const opt = document.createElement('option');
+                opt.value = hour;
+                opt.textContent = hour;
+                runhourSelect.appendChild(opt);
+            });
+            updateView();
+        })
+        .catch(() => {
+            autoLabel.textContent = 'Error fetching run hours.';
+        });
+}
+
+// Update label and fetch PNGs
+function updateView() {
+    const y = yymmddSelect.value;
+    const r = runhourSelect.value;
+    if (y && r) {
+        autoLabel.textContent = `Showing: ${y} / ${r}`;
+        fetchPngs(y, r);
+    } else {
+        autoLabel.textContent = 'Select a date and run hour.';
+        pngsDiv.innerHTML = '';
+    }
+}
+
+yymmddSelect.addEventListener('change', () => {
+    fetchRunHours(yymmddSelect.value);
+});
+runhourSelect.addEventListener('change', updateView);
+
+// Initial load
+fetchDates();
+
+function fetchPngs(y, r) {
+    pngsDiv.innerHTML = '<em>Loading...</em>';
+    fetch(`/list_dated_pngs/${y}/${r}`)
+        .then(resp => resp.json())
+        .then(files => {
+            if (files.length === 0) {
+                pngsDiv.innerHTML = '<em>No PNGs found for this date/run hour.</em>';
+                return;
+            }
+            pngsDiv.innerHTML = '';
+            files.forEach(filename => {
+                const div = document.createElement('div');
+                div.className = 'png-item';
+                const img = document.createElement('img');
+                img.src = `/dated_pngs/${y}/${r}/${filename}`;
+                img.alt = filename;
+                const fn = document.createElement('div');
+                fn.className = 'filename';
+                fn.textContent = filename;
+                div.appendChild(img);
+                div.appendChild(fn);
+                pngsDiv.appendChild(div);
+            });
+        })
+        .catch(() => {
+            pngsDiv.innerHTML = '<em>Error loading PNGs.</em>';
+        });
+}
+</script>
+</body>
+</html>
