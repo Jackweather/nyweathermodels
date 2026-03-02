@@ -114,10 +114,34 @@ for offset in range(24):  # Check up to 24 hours back
             most_recent_run_time = candidate_time
             break
 
+# If no valid run found, fall back to previous run (6 hours earlier)
 if most_recent_run_time is None:
-    raise ValueError("No valid run time found in the available hours.")
+    print("No valid run time found in the available hours. Searching for fallback run hour one hour at a time.")
+    fallback_found = False
+    for offset in range(1, 25):  # Search up to 24 hours back, one hour at a time
+        candidate_time = current_utc_time - timedelta(hours=offset)
+        candidate_hour = candidate_time.hour
+        if candidate_hour in available_hours:
+            candidate_time = candidate_time.replace(minute=0, second=0, microsecond=0)
+            if is_valid_run(candidate_time):
+                most_recent_run_time = candidate_time
+                print(f"Using fallback run time: {most_recent_run_time}")
+                fallback_found = True
+                break
+    if not fallback_found:
+        raise ValueError("No valid run time found, including fallback.")
 
 forecast_steps = get_forecast_steps(most_recent_run_time.hour)
+
+# Define previous_run_time as the most recent run time minus the forecast interval
+previous_run_time = most_recent_run_time - timedelta(hours=6)
+
+# Function to get date and hour strings for a given run time
+def get_run_strings(run_time):
+    return run_time.strftime("%Y%m%d"), run_time.strftime("%H")
+
+# Start with the most recent run
+date_str, hour_str = get_run_strings(most_recent_run_time)
 
 # Define previous_run_time as the most recent run time minus the forecast interval
 previous_run_time = most_recent_run_time - timedelta(hours=6)
