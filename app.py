@@ -156,7 +156,7 @@ def run_task1():
         ("/opt/render/project/src/NY/total_precip_EAST.py", "/opt/render/project/src/NY"),
         ("/opt/render/project/src/NY/vis_EAST.py", "/opt/render/project/src/NY"),
         ("/opt/render/project/src/NY/Snow_liquid_ratio_SNOD_EAST.py", "/opt/render/project/src/NY"),
-        ("/opt/render/project/src/NY/save_png_dirs.py", "/opt/render/project/src/NY"),
+        
     ]
     threading.Thread(target=lambda: run_scripts(scripts, 3)).start()
     return "Task started in background! Check logs folder for output.", 200
